@@ -4,12 +4,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+### STS 地点###
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.setting
 .springBeans
 .sts4-cache
 
