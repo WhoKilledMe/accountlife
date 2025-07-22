@@ -35,7 +35,7 @@ public class AssetAccount {
     private String name;
 
     /**
-     * 账户类型：1-bank(银行)，2-platform(平台)，3-credit_wallet(信用钱包)，4-wallet(虚拟余额)
+     * 账户类型：1-bank，2-platform，3-credit_wallet，4-wallet
      */
     
     @Column("type")
@@ -56,11 +56,11 @@ public class AssetAccount {
     private String accountNumber;
 
     /**
-     * 是否为虚拟账户（如信用钱包）
+     * 是否为虚拟账户
      */
     
     @Column("is_virtual")
-    private String isVirtual;
+    private Boolean isVirtual;
 
     /**
      * 信用额度，仅信用钱包用
@@ -77,9 +77,37 @@ public class AssetAccount {
     private String currency;
 
     /**
+     * 创建人
+     */
+    
+    @Column("created_by")
+    private String createdBy;
+
+    /**
      * 创建时间
      */
     
     @Column("created_at")
     private LocalDateTime createdAt;
+
+    /**
+     * 修改人
+     */
+    
+    @Column("updated_by")
+    private String updatedBy;
+
+    /**
+     * 修改时间
+     */
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
+    /**
+     * 是否删除（0-否，1-是）
+     */
+    
+    @Column("is_deleted")
+    private Integer isDeleted;
 }

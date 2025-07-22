@@ -1,12 +1,13 @@
 package com.acco.life.service;
 
 import com.acco.life.dto.UserGroupDto;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface UserGroupService {
 
-     Flux<UserGroupDto> findAll();
+     Mono<List<UserGroupDto>> findAll();
 
      Mono<UserGroupDto> findById(Integer id);
 

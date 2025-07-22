@@ -6,8 +6,9 @@ import com.acco.life.repository.AccountTransactionRepository;
 import com.acco.life.service.AccountTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
 
 
     @Override
-    public Flux<AccountTransactionDto> findAll() {
+    public Mono<List<AccountTransactionDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override

@@ -1,12 +1,13 @@
 package com.acco.life.service;
 
 import com.acco.life.dto.TransactionCategoryDto;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface TransactionCategoryService {
 
-     Flux<TransactionCategoryDto> findAll();
+     Mono<List<TransactionCategoryDto>> findAll();
 
      Mono<TransactionCategoryDto> findById(Integer id);
 

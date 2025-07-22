@@ -6,8 +6,9 @@ import com.acco.life.repository.UserGroupMemberRepository;
 import com.acco.life.service.UserGroupMemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class UserGroupMemberServiceImpl implements UserGroupMemberService {
 
 
     @Override
-    public Flux<UserGroupMemberDto> findAll() {
+    public Mono<List<UserGroupMemberDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override

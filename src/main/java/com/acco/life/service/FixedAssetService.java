@@ -1,12 +1,13 @@
 package com.acco.life.service;
 
 import com.acco.life.dto.FixedAssetDto;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface FixedAssetService {
 
-     Flux<FixedAssetDto> findAll();
+     Mono<List<FixedAssetDto>> findAll();
 
      Mono<FixedAssetDto> findById(Integer id);
 

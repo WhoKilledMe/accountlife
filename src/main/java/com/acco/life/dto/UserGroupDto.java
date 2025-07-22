@@ -11,10 +11,26 @@ public class UserGroupDto {
 
     @Schema(name = "id", description = "用户组ID")
     private Integer id;
+
     @Schema(name = "name", description = "组名称（如 家庭、公司账本）")
     private String name;
+
     @Schema(name = "description", description = "组描述")
     private String description;
+
+    @Schema(name = "createdBy", description = "创建人")
+    private String createdBy;
+
     @Schema(name = "createdAt", description = "创建时间")
     private LocalDateTime createdAt;
+
+    @Schema(name = "updatedBy", description = "修改人")
+    private String updatedBy;
+
+    @Schema(name = "updatedAt", description = "修改时间")
+    private LocalDateTime updatedAt;
+
+    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）")
+    private Integer isDeleted;
+
 }

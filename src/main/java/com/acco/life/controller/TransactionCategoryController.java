@@ -5,9 +5,11 @@ import com.acco.life.service.TransactionCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Tag(name = "TransactionCategory 接口")
 @RestController
@@ -19,26 +21,34 @@ public class TransactionCategoryController {
 
     @Operation(summary = "查询所有 TransactionCategory")
     @GetMapping
-    public Flux<TransactionCategoryDto> list() {
-        return service.findAll();
+    public Mono<ResponseEntity<List<TransactionCategoryDto>>> list() {
+        return service.findAll().map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "根据 ID 查询 TransactionCategory")
     @GetMapping("/{id}")
-    public Mono<TransactionCategoryDto> get(@PathVariable Integer id) {
-        return service.findById(id);
+    public Mono<ResponseEntity<TransactionCategoryDto>> get(@PathVariable Integer id) {
+        return service.findById(id).map(ResponseEntity::ok)
+        .onErrorResume(e ->
+        Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "创建 TransactionCategory")
     @PostMapping
-    public Mono<TransactionCategoryDto> create(@RequestBody Mono<TransactionCategoryDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<TransactionCategoryDto>> create(@RequestBody Mono<TransactionCategoryDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                .onErrorResume(e ->
+                Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "更新 TransactionCategory")
     @PutMapping
-    public Mono<TransactionCategoryDto> update(@RequestBody Mono<TransactionCategoryDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<TransactionCategoryDto>> update(@RequestBody Mono<TransactionCategoryDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "删除 TransactionCategory")

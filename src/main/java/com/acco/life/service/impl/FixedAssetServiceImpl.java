@@ -6,8 +6,9 @@ import com.acco.life.repository.FixedAssetRepository;
 import com.acco.life.service.FixedAssetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class FixedAssetServiceImpl implements FixedAssetService {
 
 
     @Override
-    public Flux<FixedAssetDto> findAll() {
+    public Mono<List<FixedAssetDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override

@@ -6,8 +6,9 @@ import com.acco.life.repository.CreditWalletStatementRepository;
 import com.acco.life.service.CreditWalletStatementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class CreditWalletStatementServiceImpl implements CreditWalletStatementSe
 
 
     @Override
-    public Flux<CreditWalletStatementDto> findAll() {
+    public Mono<List<CreditWalletStatementDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override

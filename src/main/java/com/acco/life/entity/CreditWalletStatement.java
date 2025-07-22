@@ -70,11 +70,18 @@ public class CreditWalletStatement {
     private LocalDateTime repayDate;
 
     /**
-     * 账单状态：1-open(未还)，2-paid(已还)，3-overdue(逾期)
+     * 账单状态：1-open，2-paid，3-overdue
      */
     
     @Column("status")
     private Integer status;
+
+    /**
+     * 创建人
+     */
+    
+    @Column("created_by")
+    private String createdBy;
 
     /**
      * 生成时间
@@ -82,4 +89,25 @@ public class CreditWalletStatement {
     
     @Column("created_at")
     private LocalDateTime createdAt;
+
+    /**
+     * 修改人
+     */
+    
+    @Column("updated_by")
+    private String updatedBy;
+
+    /**
+     * 修改时间
+     */
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
+    /**
+     * 是否删除（0-否，1-是）
+     */
+    
+    @Column("is_deleted")
+    private Integer isDeleted;
 }

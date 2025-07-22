@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@Schema(name = "UserDto", description = "UserAccount 数据传输对象")
+@Schema(name = "UserDto", description = "User 数据传输对象")
 public class UserDto {
 
     @Schema(name = "id", description = "用户ID")
@@ -21,8 +21,20 @@ public class UserDto {
     @Schema(name = "phone", description = "手机号")
     private String phone;
 
+    @Schema(name = "createdBy", description = "创建人")
+    private String createdBy;
+
     @Schema(name = "createdAt", description = "创建时间")
     private LocalDateTime createdAt;
+
+    @Schema(name = "updatedBy", description = "修改人")
+    private String updatedBy;
+
+    @Schema(name = "updatedAt", description = "修改时间")
+    private LocalDateTime updatedAt;
+
+    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）")
+    private Integer isDeleted;
 
     @Schema(name = "groupId", description = "用户组Id")
     private Integer groupId ;

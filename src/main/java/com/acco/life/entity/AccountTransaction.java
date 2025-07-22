@@ -35,7 +35,7 @@ public class AccountTransaction {
     private Integer accountId;
 
     /**
-     * 交易类型：1-income(收入)，2-expense(支出)，3-transfer_out(转出)，4-transfer_in(转入)
+     * 交易类型：1-income，2-expense，3-transfer_out，4-transfer_in
      */
     
     @Column("type")
@@ -56,7 +56,7 @@ public class AccountTransaction {
     private Integer categoryId;
 
     /**
-     * 关联交易ID（如转账双边）
+     * 关联交易ID
      */
     
     @Column("related_transaction_id")
@@ -84,23 +84,51 @@ public class AccountTransaction {
     private Integer sourceType;
 
     /**
-     * 原始账单唯一标识/流水号
+     * 原始账单唯一标识
      */
     
     @Column("source_ref")
     private String sourceRef;
 
     /**
-     * 账单归属ID（如花呗账单）
+     * 账单归属ID
      */
     
     @Column("statement_id")
     private Integer statementId;
 
     /**
-     * 入账时间
+     * 创建人
+     */
+    
+    @Column("created_by")
+    private String createdBy;
+
+    /**
+     * 创建时间
      */
     
     @Column("created_at")
     private LocalDateTime createdAt;
+
+    /**
+     * 修改人
+     */
+    
+    @Column("updated_by")
+    private String updatedBy;
+
+    /**
+     * 修改时间
+     */
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
+    /**
+     * 是否删除（0-否，1-是）
+     */
+    
+    @Column("is_deleted")
+    private Integer isDeleted;
 }

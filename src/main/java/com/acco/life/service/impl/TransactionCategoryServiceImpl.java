@@ -6,8 +6,9 @@ import com.acco.life.repository.TransactionCategoryRepository;
 import com.acco.life.service.TransactionCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class TransactionCategoryServiceImpl implements TransactionCategoryServic
 
 
     @Override
-    public Flux<TransactionCategoryDto> findAll() {
+    public Mono<List<TransactionCategoryDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override

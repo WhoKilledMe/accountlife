@@ -27,7 +27,7 @@ public class PlatformTransaction {
     private Integer userId;
 
     /**
-     * 平台编码（如 ALIPAY）
+     * 平台编码
      */
     
     @Column("platform_code")
@@ -55,9 +55,37 @@ public class PlatformTransaction {
     private String remark;
 
     /**
+     * 创建人
+     */
+    
+    @Column("created_by")
+    private String createdBy;
+
+    /**
      * 导入时间
      */
     
     @Column("created_at")
     private LocalDateTime createdAt;
+
+    /**
+     * 修改人
+     */
+    
+    @Column("updated_by")
+    private String updatedBy;
+
+    /**
+     * 修改时间
+     */
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
+    /**
+     * 是否删除（0-否，1-是）
+     */
+    
+    @Column("is_deleted")
+    private Integer isDeleted;
 }

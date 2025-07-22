@@ -49,7 +49,7 @@ public class InvestmentAsset {
     private String name;
 
     /**
-     * 类型：1-stock(股票)，2-fund(基金)，3-bond(债券)
+     * 类型：1-stock，2-fund，3-bond
      */
     
     @Column("type")
@@ -89,4 +89,39 @@ public class InvestmentAsset {
     
     @Column("last_updated")
     private LocalDateTime lastUpdated;
+
+    /**
+     * 创建人
+     */
+    
+    @Column("created_by")
+    private String createdBy;
+
+    /**
+     * 创建时间
+     */
+    
+    @Column("created_at")
+    private LocalDateTime createdAt;
+
+    /**
+     * 修改人
+     */
+    
+    @Column("updated_by")
+    private String updatedBy;
+
+    /**
+     * 修改时间
+     */
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
+    /**
+     * 是否删除（0-否，1-是）
+     */
+    
+    @Column("is_deleted")
+    private Integer isDeleted;
 }

@@ -5,18 +5,18 @@ import com.acco.life.dto.UserDto;
 import com.acco.life.dto.UserGroupDto;
 import com.acco.life.entity.UserGroup;
 import com.acco.life.entity.UserGroupMember;
-import com.acco.life.mapper.UserMapper;
 import com.acco.life.mapper.UserGroupMapper;
-import com.acco.life.repository.UserAccountRepository;
+import com.acco.life.mapper.UserMapper;
 import com.acco.life.repository.UserGroupMemberRepository;
 import com.acco.life.repository.UserGroupRepository;
+import com.acco.life.repository.UserRepository;
 import com.acco.life.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -26,7 +26,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserAccountRepository repository;
+    private final UserRepository repository;
 
     private final UserGroupRepository groupRepository;
 
@@ -38,15 +38,15 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Flux<UserDto> findAll() {
+    public Mono<List<UserDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override
     public Mono<UserDto> findById(Integer id) {
         return repository.findById(id)
-        .map(mapper::toDto);
+                .map(mapper::toDto);
     }
 
     @Override
@@ -57,6 +57,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(this::saveUserAccount)
                 .flatMap(this::bindGroupMember);
     }
+
     private Mono<UserDto> ensureGroupId(UserDto dto) {
         if (Objects.nonNull(dto.getGroupId())) {
             return Mono.just(dto);
@@ -68,12 +69,14 @@ public class UserServiceImpl implements UserService {
                     return dto;
                 });
     }
+
     private Mono<UserDto> saveUserAccount(UserDto dto) {
         return Mono.just(dto)
                 .map(mapper::toEntity)
                 .flatMap(repository::save)
-                .map(entity->mapper.toDto(entity, dto.getGroupId()));
+                .map(entity -> mapper.toDto(entity, dto.getGroupId()));
     }
+
     private Mono<UserDto> bindGroupMember(UserDto dto) {
         Integer groupId = dto.getGroupId();
         if (ObjectUtil.isNull(groupId)) {
@@ -87,6 +90,7 @@ public class UserServiceImpl implements UserService {
 
         return memberRepository.save(member).thenReturn(dto);
     }
+
     private Mono<UserGroup> createUserGroup(String username) {
         UserGroupDto userGroupDto = new UserGroupDto();
         userGroupDto.setName(username + "默认用户组");

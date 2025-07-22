@@ -5,9 +5,11 @@ import com.acco.life.service.CreditWalletStatementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Tag(name = "CreditWalletStatement 接口")
 @RestController
@@ -19,26 +21,34 @@ public class CreditWalletStatementController {
 
     @Operation(summary = "查询所有 CreditWalletStatement")
     @GetMapping
-    public Flux<CreditWalletStatementDto> list() {
-        return service.findAll();
+    public Mono<ResponseEntity<List<CreditWalletStatementDto>>> list() {
+        return service.findAll().map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "根据 ID 查询 CreditWalletStatement")
     @GetMapping("/{id}")
-    public Mono<CreditWalletStatementDto> get(@PathVariable Integer id) {
-        return service.findById(id);
+    public Mono<ResponseEntity<CreditWalletStatementDto>> get(@PathVariable Integer id) {
+        return service.findById(id).map(ResponseEntity::ok)
+        .onErrorResume(e ->
+        Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "创建 CreditWalletStatement")
     @PostMapping
-    public Mono<CreditWalletStatementDto> create(@RequestBody Mono<CreditWalletStatementDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<CreditWalletStatementDto>> create(@RequestBody Mono<CreditWalletStatementDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                .onErrorResume(e ->
+                Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "更新 CreditWalletStatement")
     @PutMapping
-    public Mono<CreditWalletStatementDto> update(@RequestBody Mono<CreditWalletStatementDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<CreditWalletStatementDto>> update(@RequestBody Mono<CreditWalletStatementDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "删除 CreditWalletStatement")

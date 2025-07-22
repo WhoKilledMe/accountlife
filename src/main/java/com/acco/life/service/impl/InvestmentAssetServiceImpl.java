@@ -6,8 +6,9 @@ import com.acco.life.repository.InvestmentAssetRepository;
 import com.acco.life.service.InvestmentAssetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class InvestmentAssetServiceImpl implements InvestmentAssetService {
 
 
     @Override
-    public Flux<InvestmentAssetDto> findAll() {
+    public Mono<List<InvestmentAssetDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override

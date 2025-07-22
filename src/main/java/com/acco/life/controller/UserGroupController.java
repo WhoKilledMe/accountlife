@@ -5,9 +5,11 @@ import com.acco.life.service.UserGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Tag(name = "UserGroup 接口")
 @RestController
@@ -19,26 +21,34 @@ public class UserGroupController {
 
     @Operation(summary = "查询所有 UserGroup")
     @GetMapping
-    public Flux<UserGroupDto> list() {
-        return service.findAll();
+    public Mono<ResponseEntity<List<UserGroupDto>>> list() {
+        return service.findAll().map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "根据 ID 查询 UserGroup")
     @GetMapping("/{id}")
-    public Mono<UserGroupDto> get(@PathVariable Integer id) {
-        return service.findById(id);
+    public Mono<ResponseEntity<UserGroupDto>> get(@PathVariable Integer id) {
+        return service.findById(id).map(ResponseEntity::ok)
+        .onErrorResume(e ->
+        Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "创建 UserGroup")
     @PostMapping
-    public Mono<UserGroupDto> create(@RequestBody Mono<UserGroupDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<UserGroupDto>> create(@RequestBody Mono<UserGroupDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                .onErrorResume(e ->
+                Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "更新 UserGroup")
     @PutMapping
-    public Mono<UserGroupDto> update(@RequestBody Mono<UserGroupDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<UserGroupDto>> update(@RequestBody Mono<UserGroupDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "删除 UserGroup")

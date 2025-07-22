@@ -5,9 +5,11 @@ import com.acco.life.service.InvestmentAssetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Tag(name = "InvestmentAsset 接口")
 @RestController
@@ -19,26 +21,34 @@ public class InvestmentAssetController {
 
     @Operation(summary = "查询所有 InvestmentAsset")
     @GetMapping
-    public Flux<InvestmentAssetDto> list() {
-        return service.findAll();
+    public Mono<ResponseEntity<List<InvestmentAssetDto>>> list() {
+        return service.findAll().map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "根据 ID 查询 InvestmentAsset")
     @GetMapping("/{id}")
-    public Mono<InvestmentAssetDto> get(@PathVariable Integer id) {
-        return service.findById(id);
+    public Mono<ResponseEntity<InvestmentAssetDto>> get(@PathVariable Integer id) {
+        return service.findById(id).map(ResponseEntity::ok)
+        .onErrorResume(e ->
+        Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "创建 InvestmentAsset")
     @PostMapping
-    public Mono<InvestmentAssetDto> create(@RequestBody Mono<InvestmentAssetDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<InvestmentAssetDto>> create(@RequestBody Mono<InvestmentAssetDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                .onErrorResume(e ->
+                Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "更新 InvestmentAsset")
     @PutMapping
-    public Mono<InvestmentAssetDto> update(@RequestBody Mono<InvestmentAssetDto> dto) {
-        return service.save(dto);
+    public Mono<ResponseEntity<InvestmentAssetDto>> update(@RequestBody Mono<InvestmentAssetDto> dto) {
+        return service.save(dto).map(ResponseEntity::ok)
+                    .onErrorResume(e ->
+                    Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "删除 InvestmentAsset")

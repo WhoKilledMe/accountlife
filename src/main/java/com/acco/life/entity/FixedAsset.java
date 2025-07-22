@@ -35,7 +35,7 @@ public class FixedAsset {
     private String name;
 
     /**
-     * 资产类型：1-property(房产)，2-vehicle(车辆)，3-equipment(设备)，4-other(其他)
+     * 资产类型：1-property，2-vehicle，3-equipment，4-other
      */
     
     @Column("type")
@@ -70,9 +70,37 @@ public class FixedAsset {
     private String note;
 
     /**
+     * 创建人
+     */
+    
+    @Column("created_by")
+    private String createdBy;
+
+    /**
      * 创建时间
      */
     
     @Column("created_at")
     private LocalDateTime createdAt;
+
+    /**
+     * 修改人
+     */
+    
+    @Column("updated_by")
+    private String updatedBy;
+
+    /**
+     * 修改时间
+     */
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+
+    /**
+     * 是否删除（0-否，1-是）
+     */
+    
+    @Column("is_deleted")
+    private Integer isDeleted;
 }

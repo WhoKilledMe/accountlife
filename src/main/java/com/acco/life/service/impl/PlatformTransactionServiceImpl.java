@@ -6,8 +6,9 @@ import com.acco.life.repository.PlatformTransactionRepository;
 import com.acco.life.service.PlatformTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +20,9 @@ public class PlatformTransactionServiceImpl implements PlatformTransactionServic
 
 
     @Override
-    public Flux<PlatformTransactionDto> findAll() {
+    public Mono<List<PlatformTransactionDto>> findAll() {
         return repository.findAll()
-    .map(mapper::toDto);
+                .map(mapper::toDto).collectList();
     }
 
     @Override
