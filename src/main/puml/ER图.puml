@@ -1,0 +1,133 @@
+@startuml
+!define table(x) class x << (T,#FFAAAA) >>
+hide circle
+
+table(user_account) {
+  + id : BIGINT        -- 用户ID
+  username : VARCHAR   -- 用户名
+  email : VARCHAR      -- 邮箱
+  phone : VARCHAR      -- 手机号
+  created_at : DATETIME -- 创建时间
+}
+
+table(user_group) {
+  + id : BIGINT         -- 用户组ID
+  name : VARCHAR        -- 组名称
+  description : VARCHAR -- 组描述
+  created_at : DATETIME -- 创建时间
+}
+
+table(user_group_member) {
+  + id : BIGINT        -- 关系ID
+  group_id : BIGINT    -- 用户组ID
+  user_id : BIGINT     -- 用户ID
+  role : ENUM          -- 角色：owner组长/member成员
+  joined_at : DATETIME -- 加入时间
+}
+
+table(asset_account) {
+  + id : BIGINT             -- 账户ID
+  user_id : BIGINT          -- 所属用户
+  name : VARCHAR            -- 账户名称
+  type : ENUM               -- 账户类型（bank/platform/credit_wallet/wallet）
+  platform_code : VARCHAR   -- 平台编码
+  account_number : VARCHAR  -- 卡号或账号
+  is_virtual : BOOLEAN      -- 是否为虚拟账户
+  credit_limit : DECIMAL    -- 信用额度
+  currency : VARCHAR        -- 币种
+  created_at : DATETIME     -- 创建时间
+}
+
+table(account_transaction) {
+  + id : BIGINT               -- 交易ID
+  user_id : BIGINT            -- 所属用户
+  account_id : BIGINT         -- 账户ID
+  type : ENUM                 -- 交易类型（收入/支出/转出/转入）
+  amount : DECIMAL            -- 金额
+  category_id : BIGINT        -- 分类ID
+  related_transaction_id : BIGINT -- 关联交易
+  description : VARCHAR       -- 交易说明
+  transaction_time : DATETIME -- 实际发生时间
+  source_type : ENUM          -- 来源类型（bank/platform/credit_wallet）
+  source_ref : VARCHAR        -- 原始流水号
+  statement_id : BIGINT       -- 所属账单ID
+  created_at : DATETIME       -- 创建时间
+}
+
+table(transaction_category) {
+  + id : BIGINT         -- 分类ID
+  name : VARCHAR        -- 分类名称
+  type : ENUM           -- 类型：income-收入/expense-支出
+  parent_id : BIGINT    -- 父分类ID
+  icon : VARCHAR        -- 图标
+  user_id : BIGINT      -- 用户ID（null为系统级）
+  sort_order : INT      -- 排序
+}
+
+table(platform_transaction) {
+  + id : BIGINT                -- 平台账单ID
+  user_id : BIGINT             -- 用户ID
+  platform_code : VARCHAR      -- 平台编码
+  raw_json : TEXT              -- 原始数据
+  mapped_transaction_id : BIGINT -- 映射交易ID
+  remark : VARCHAR             -- 备注
+  created_at : DATETIME        -- 创建时间
+}
+
+table(investment_asset) {
+  + id : BIGINT             -- 投资ID
+  user_id : BIGINT          -- 用户ID
+  account_id : BIGINT       -- 账户ID
+  code : VARCHAR            -- 股票/基金代码
+  name : VARCHAR            -- 名称
+  type : ENUM               -- 类型（stock/fund/bond）
+  quantity : DECIMAL        -- 持仓数量
+  cost_price : DECIMAL      -- 成本价
+  market_price : DECIMAL    -- 市价
+  currency : VARCHAR        -- 币种
+  last_updated : DATETIME   -- 更新时间
+}
+
+table(fixed_asset) {
+  + id : BIGINT            -- 固定资产ID
+  user_id : BIGINT         -- 用户ID
+  name : VARCHAR           -- 名称
+  type : ENUM              -- 类型（property/vehicle/equipment/other）
+  value : DECIMAL          -- 评估/购入价
+  purchase_date : DATE     -- 购买日期
+  location : VARCHAR       -- 位置
+  note : TEXT              -- 备注
+  created_at : DATETIME    -- 创建时间
+}
+
+table(credit_wallet_statement) {
+  + id : BIGINT              -- 账单ID
+  account_id : BIGINT        -- 信用钱包ID
+  user_id : BIGINT           -- 用户ID
+  billing_period_start : DATE -- 账期开始
+  billing_period_end : DATE   -- 账期结束
+  total_amount : DECIMAL     -- 应还金额
+  repay_due_date : DATE      -- 到期日
+  repay_date : DATE          -- 实际还款日
+  status : ENUM              -- 状态（open/paid/overdue）
+  created_at : DATETIME      -- 创建时间
+}
+
+' 关联关系
+user_account ||--o{ asset_account : has
+user_account ||--o{ account_transaction : logs
+user_account ||--o{ transaction_category : defines
+user_account ||--o{ platform_transaction : owns
+user_account ||--o{ investment_asset : holds
+user_account ||--o{ fixed_asset : holds
+user_account ||--o{ credit_wallet_statement : owns
+
+user_account ||--o{ user_group_member : joins
+user_group ||--o{ user_group_member : includes
+
+asset_account ||--o{ account_transaction : logs
+transaction_category ||--o{ account_transaction : classifies
+account_transaction ||--|| account_transaction : relates
+credit_wallet_statement ||--o{ account_transaction : includes
+
+@enduml

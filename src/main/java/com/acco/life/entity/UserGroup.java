@@ -1,0 +1,42 @@
+package com.acco.life.entity;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.time.LocalDateTime;
+
+@Table("user_group")
+@Data
+public class UserGroup {
+
+
+    /**
+     * 用户组ID
+     */
+    @Id
+    @Column("id")
+    private Integer id;
+
+    /**
+     * 组名称（如 家庭、公司账本）
+     */
+    
+    @Column("name")
+    private String name;
+
+    /**
+     * 组描述
+     */
+    
+    @Column("description")
+    private String description;
+
+    /**
+     * 创建时间
+     */
+    
+    @Column("created_at")
+    private LocalDateTime createdAt;
+}

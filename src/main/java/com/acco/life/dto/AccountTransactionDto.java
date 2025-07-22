@@ -1,0 +1,39 @@
+package com.acco.life.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@Schema(name = "AccountTransactionDto", description = "AccountTransaction 数据传输对象")
+public class AccountTransactionDto {
+
+    @Schema(name = "id", description = "交易ID")
+    private Integer id;
+    @Schema(name = "userId", description = "所属用户")
+    private Integer userId;
+    @Schema(name = "accountId", description = "发生账户")
+    private Integer accountId;
+    @Schema(name = "type", description = "交易类型：1-income(收入)，2-expense(支出)，3-transfer_out(转出)，4-transfer_in(转入)")
+    private Integer type;
+    @Schema(name = "amount", description = "交易金额")
+    private BigDecimal amount;
+    @Schema(name = "categoryId", description = "分类ID")
+    private Integer categoryId;
+    @Schema(name = "relatedTransactionId", description = "关联交易ID（如转账双边）")
+    private Integer relatedTransactionId;
+    @Schema(name = "description", description = "摘要说明")
+    private String description;
+    @Schema(name = "transactionTime", description = "实际发生时间")
+    private LocalDateTime transactionTime;
+    @Schema(name = "sourceType", description = "来源类型：1-bank，2-platform，3-credit_wallet")
+    private Integer sourceType;
+    @Schema(name = "sourceRef", description = "原始账单唯一标识/流水号")
+    private String sourceRef;
+    @Schema(name = "statementId", description = "账单归属ID（如花呗账单）")
+    private Integer statementId;
+    @Schema(name = "createdAt", description = "入账时间")
+    private LocalDateTime createdAt;
+}

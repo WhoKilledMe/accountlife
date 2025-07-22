@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: account_life
+  r2dbc:
+    url: r2dbc:mariadb://localhost:3306/account_life?allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+    pool:
+      max-idle-time: PT30S
+  sql:
+    init:
+      mode: always
+server:
+  port: 8081
+logging:
+  level:
+    io.r2dbc.spi.ConnectionFactory: DEBUG
+    org.springframework.r2dbc.core.DefaultDatabaseClient: DEBUG
+    io.r2dbc.mysql.QUERY: DEBUG
