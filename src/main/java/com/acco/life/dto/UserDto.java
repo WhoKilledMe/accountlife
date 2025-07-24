@@ -21,19 +21,19 @@ public class UserDto {
     @Schema(name = "phone", description = "手机号")
     private String phone;
 
-    @Schema(name = "createdBy", description = "创建人")
+    @Schema(name = "createdBy", description = "创建人", accessMode = Schema.AccessMode.READ_ONLY)
     private String createdBy;
 
-    @Schema(name = "createdAt", description = "创建时间")
+    @Schema(name = "createdAt", description = "创建时间", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @Schema(name = "updatedBy", description = "修改人")
+    @Schema(name = "updatedBy", description = "修改人", accessMode = Schema.AccessMode.READ_ONLY)
     private String updatedBy;
 
-    @Schema(name = "updatedAt", description = "修改时间")
+    @Schema(name = "updatedAt", description = "修改时间", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime updatedAt;
 
-    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）")
+    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer isDeleted;
 
     @Schema(name = "groupId", description = "用户组Id")

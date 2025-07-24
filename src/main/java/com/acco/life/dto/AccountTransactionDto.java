@@ -13,7 +13,7 @@ public class AccountTransactionDto {
     @Schema(name = "id", description = "交易ID")
     private Integer id;
 
-    @Schema(name = "userId", description = "所属用户")
+    @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer userId;
 
     @Schema(name = "accountId", description = "发生账户")
@@ -46,19 +46,19 @@ public class AccountTransactionDto {
     @Schema(name = "statementId", description = "账单归属ID")
     private Integer statementId;
 
-    @Schema(name = "createdBy", description = "创建人")
+    @Schema(name = "createdBy", description = "创建人", accessMode = Schema.AccessMode.READ_ONLY)
     private String createdBy;
 
-    @Schema(name = "createdAt", description = "创建时间")
+    @Schema(name = "createdAt", description = "创建时间", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @Schema(name = "updatedBy", description = "修改人")
+    @Schema(name = "updatedBy", description = "修改人", accessMode = Schema.AccessMode.READ_ONLY)
     private String updatedBy;
 
-    @Schema(name = "updatedAt", description = "修改时间")
+    @Schema(name = "updatedAt", description = "修改时间", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime updatedAt;
 
-    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）")
+    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer isDeleted;
 
 }

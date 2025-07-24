@@ -2,6 +2,7 @@ package com.acco.life.controller;
 
 import com.acco.life.dto.AssetAccountDto;
 import com.acco.life.service.AssetAccountService;
+import com.acco.life.util.UserIdInjectorUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -38,17 +39,21 @@ public class AssetAccountController {
     @Operation(summary = "创建 AssetAccount")
     @PostMapping
     public Mono<ResponseEntity<AssetAccountDto>> create(@RequestBody Mono<AssetAccountDto> dto) {
-        return service.save(dto).map(ResponseEntity::ok)
+        return UserIdInjectorUtil.withUserId(dto)
+                .flatMap(d -> service.save(Mono.just(d)))
+                .map(ResponseEntity::ok)
                 .onErrorResume(e ->
-                Mono.just(ResponseEntity.badRequest().build()));
+                        Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "更新 AssetAccount")
     @PutMapping
     public Mono<ResponseEntity<AssetAccountDto>> update(@RequestBody Mono<AssetAccountDto> dto) {
-        return service.save(dto).map(ResponseEntity::ok)
-                    .onErrorResume(e ->
-                    Mono.just(ResponseEntity.badRequest().build()));
+        return UserIdInjectorUtil.withUserId(dto)
+                .flatMap(d -> service.save(Mono.just(d)))
+                .map(ResponseEntity::ok)
+                .onErrorResume(e ->
+                        Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "删除 AssetAccount")
