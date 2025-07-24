@@ -13,6 +13,7 @@ import com.acco.life.repository.UserRepository;
 import com.acco.life.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -49,8 +50,8 @@ public class UserServiceImpl implements UserService {
                 .map(mapper::toDto);
     }
 
+    @Transactional
     @Override
-
     public Mono<UserDto> save(Mono<UserDto> dtoMono) {
         return dtoMono
                 .flatMap(this::ensureGroupId)
@@ -74,7 +75,7 @@ public class UserServiceImpl implements UserService {
         return Mono.just(dto)
                 .map(mapper::toEntity)
                 .flatMap(repository::save)
-                .map(entity -> mapper.toDto(entity, dto.getGroupId()));
+                .map(entity -> mapper.dtoToDto(dto, entity.getId(),dto.getGroupId(), 1));
     }
 
     private Mono<UserDto> bindGroupMember(UserDto dto) {
@@ -86,15 +87,15 @@ public class UserServiceImpl implements UserService {
         UserGroupMember member = new UserGroupMember();
         member.setUserId(dto.getId());
         member.setGroupId(groupId);
-        member.setRole(1);
+        member.setRole(dto.getRole());
 
         return memberRepository.save(member).thenReturn(dto);
     }
 
     private Mono<UserGroup> createUserGroup(String username) {
         UserGroupDto userGroupDto = new UserGroupDto();
-        userGroupDto.setName(username + "默认用户组");
-        userGroupDto.setDescription(username + "默认用户组");
+        userGroupDto.setName(username + "家庭组");
+        userGroupDto.setDescription(username + "家庭组");
         userGroupDto.setCreatedAt(LocalDateTime.now());
 
         return groupRepository.save(groupMapper.toEntity(userGroupDto));
