@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Schema(name = "CreditWalletStatementDto", description = "CreditWalletStatement 数据传输对象")
 public class CreditWalletStatementDto {
 
-    @Schema(name = "id", description = "账单ID")
+    @Schema(name = "id", description = "账单ID", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer id;
 
     @Schema(name = "accountId", description = "信用钱包账户ID")

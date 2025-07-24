@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Schema(name = "TransactionCategoryDto", description = "TransactionCategory 数据传输对象")
 public class TransactionCategoryDto {
 
-    @Schema(name = "id", description = "分类ID")
+    @Schema(name = "id", description = "分类ID", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer id;
 
     @Schema(name = "name", description = "分类名称（如 餐饮）")

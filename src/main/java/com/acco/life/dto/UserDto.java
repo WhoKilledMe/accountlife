@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Schema(name = "UserDto", description = "User 数据传输对象")
 public class UserDto {
 
-    @Schema(name = "id", description = "用户ID")
+    @Schema(name = "id", description = "用户ID", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer id;
 
     @Schema(name = "username", description = "用户名")

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Schema(name = "AssetAccountDto", description = "AssetAccount 数据传输对象")
 public class AssetAccountDto {
 
-    @Schema(name = "id", description = "账户ID")
+    @Schema(name = "id", description = "账户ID", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer id;
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
