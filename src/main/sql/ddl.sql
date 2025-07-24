@@ -181,3 +181,82 @@ CREATE TABLE credit_wallet_statement
     updated_at           DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     is_deleted           TINYINT     DEFAULT 0 COMMENT '是否删除（0-否，1-是）'
 ) COMMENT ='信用钱包账单表';
+-- 新增：预算表
+DROP TABLE IF EXISTS budget;
+CREATE TABLE budget
+(
+    id          BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '预算ID',
+    user_id     BIGINT COMMENT '所属用户',
+    category_id BIGINT COMMENT '分类ID',
+    amount      DECIMAL(18, 2) NOT NULL COMMENT '预算金额',
+    period_type TINYINT COMMENT '周期类型：1-monthly, 2-quarterly, 3-yearly',
+    start_date  DATE COMMENT '预算开始日期',
+    end_date    DATE COMMENT '预算结束日期',
+    created_by  VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
+    created_at  DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by  VARCHAR(50) DEFAULT 'system' COMMENT '修改人',
+    updated_at  DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    is_deleted  TINYINT     DEFAULT 0 COMMENT '是否删除（0-否，1-是）'
+) COMMENT ='预算表';
+
+-- 新增：报表配置表
+DROP TABLE IF EXISTS report_config;
+CREATE TABLE report_config
+(
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '报表配置ID',
+    user_id    BIGINT COMMENT '所属用户',
+    name       VARCHAR(100) COMMENT '报表名称',
+    type       TINYINT COMMENT '报表类型：1-category_summary, 2-trend_analysis',
+    config     TEXT COMMENT '报表配置JSON',
+    created_by VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
+    created_at DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(50) DEFAULT 'system' COMMENT '修改人',
+    updated_at DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    is_deleted TINYINT     DEFAULT 0 COMMENT '是否删除（0-否，1-是）'
+) COMMENT ='报表配置表';
+
+-- 新增：账户余额历史表
+DROP TABLE IF EXISTS account_balance_history;
+CREATE TABLE account_balance_history
+(
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '余额历史ID',
+    account_id BIGINT COMMENT '账户ID',
+    user_id    BIGINT COMMENT '所属用户',
+    balance    DECIMAL(18, 2) COMMENT '账户余额',
+    currency   VARCHAR(10) DEFAULT 'CNY' COMMENT '币种',
+    record_date DATE COMMENT '记录日期',
+    created_by VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
+    created_at DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(50) DEFAULT 'system' COMMENT '修改人',
+    updated_at DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    is_deleted TINYINT     DEFAULT 0 COMMENT '是否删除（0-否，1-是）'
+) COMMENT ='账户余额历史表';
+
+-- 新增：标签表
+DROP TABLE IF EXISTS tag;
+CREATE TABLE tag
+(
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '标签ID',
+    user_id    BIGINT COMMENT '所属用户',
+    name       VARCHAR(50) COMMENT '标签名称',
+    color      VARCHAR(20) COMMENT '标签颜色',
+    created_by VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
+    created_at DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(50) DEFAULT 'system' COMMENT '修改人',
+    updated_at DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    is_deleted TINYINT     DEFAULT 0 COMMENT '是否删除（0-否，1-是）'
+) COMMENT ='标签表';
+
+-- 新增：交易标签关联表
+DROP TABLE IF EXISTS transaction_tag;
+CREATE TABLE transaction_tag
+(
+    id             BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联ID',
+    transaction_id BIGINT COMMENT '交易ID',
+    tag_id         BIGINT COMMENT '标签ID',
+    created_by     VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
+    created_at     DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by     VARCHAR(50) DEFAULT 'system' COMMENT '修改人',
+    updated_at     DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+    is_deleted     TINYINT     DEFAULT 0 COMMENT '是否删除（0-否，1-是）'
+) COMMENT ='交易标签关联表';
