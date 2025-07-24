@@ -1,6 +1,12 @@
 package com.acco.life.enums;
 
-
+/**
+ * description: 固定资产类型枚举，定义了常见的固定资产类型
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 public enum FixedAssetType {
     PROPERTY(1, "房产"),
     VEHICLE(2, "车辆"),

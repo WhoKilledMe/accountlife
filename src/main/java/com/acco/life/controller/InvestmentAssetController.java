@@ -11,6 +11,13 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * description: 投资资产控制器，提供投资资产的增删改查接口
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Tag(name = "InvestmentAsset 接口")
 @RestController
 @RequestMapping("/api/investmentasset")

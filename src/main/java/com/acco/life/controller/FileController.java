@@ -16,9 +16,9 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * description: [此处简要描述文件功能]
+ * description: 文件上传控制器，处理文件上传及解析相关接口
  *
- * @date: 2025-07-22 19:33:32
+ * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
  * @version V1.0.0
  */

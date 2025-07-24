@@ -5,6 +5,13 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 用户组数据传输对象，用于封装用户组相关数据
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Data
 @Schema(name = "UserGroupDto", description = "UserGroup 数据传输对象")
 public class UserGroupDto {

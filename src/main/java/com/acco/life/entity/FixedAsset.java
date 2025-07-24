@@ -8,6 +8,13 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * description: 固定资产实体类，对应数据库表fixed_asset
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Table("fixed_asset")
 @Data
 public class FixedAsset {

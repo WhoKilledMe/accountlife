@@ -5,6 +5,13 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 用户数据传输对象，用于在控制器层和服务层之间传递用户信息
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Data
 @Schema(name = "UserDto", description = "User 数据传输对象")
 public class UserDto {

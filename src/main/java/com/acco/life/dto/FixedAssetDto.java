@@ -6,6 +6,13 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * description: 固定资产数据传输对象，用于封装固定资产相关数据
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Data
 @Schema(name = "FixedAssetDto", description = "FixedAsset 数据传输对象")
 public class FixedAssetDto {

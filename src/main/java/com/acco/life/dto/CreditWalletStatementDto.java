@@ -6,6 +6,13 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * description: 信用钱包账单数据传输对象，用于封装信用钱包账单相关数据
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Data
 @Schema(name = "CreditWalletStatementDto", description = "CreditWalletStatement 数据传输对象")
 public class CreditWalletStatementDto {

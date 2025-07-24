@@ -5,6 +5,13 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 平台交易数据传输对象，用于封装平台账单相关数据
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Data
 @Schema(name = "PlatformTransactionDto", description = "PlatformTransaction 数据传输对象")
 public class PlatformTransactionDto {

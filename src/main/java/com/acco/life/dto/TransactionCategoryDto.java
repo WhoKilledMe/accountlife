@@ -5,6 +5,13 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 交易分类数据传输对象，用于封装交易分类相关数据
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Data
 @Schema(name = "TransactionCategoryDto", description = "TransactionCategory 数据传输对象")
 public class TransactionCategoryDto {

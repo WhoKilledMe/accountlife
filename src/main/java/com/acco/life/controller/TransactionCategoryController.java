@@ -11,6 +11,14 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * description: 交易分类控制器，提供交易分类的增删改查接口
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
+
 @Tag(name = "TransactionCategory 接口")
 @RestController
 @RequestMapping("/api/transactioncategory")

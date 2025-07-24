@@ -11,6 +11,14 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * description: 用户组成员控制器，提供用户组成员的增删改查接口
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
+
 @Tag(name = "UserGroupMember 接口")
 @RestController
 @RequestMapping("/api/usergroupmember")

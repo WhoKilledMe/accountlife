@@ -7,6 +7,13 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 交易分类实体类，对应数据库表transaction_category
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Table("transaction_category")
 @Data
 public class TransactionCategory {

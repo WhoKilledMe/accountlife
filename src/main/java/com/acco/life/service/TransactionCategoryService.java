@@ -5,6 +5,13 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * description: 交易分类服务接口，定义交易分类的增删改查操作
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 public interface TransactionCategoryService {
 
      Mono<List<TransactionCategoryDto>> findAll();

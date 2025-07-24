@@ -8,6 +8,13 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * description: 资产账户实体类，对应数据库表asset_account
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Table("asset_account")
 @Data
 public class AssetAccount {

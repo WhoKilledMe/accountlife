@@ -10,6 +10,13 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * description: 用户组服务实现类，实现用户组的增删改查业务逻辑
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Service
 @RequiredArgsConstructor
 public class UserGroupServiceImpl implements UserGroupService {

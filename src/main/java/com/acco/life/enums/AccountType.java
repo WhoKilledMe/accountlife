@@ -1,6 +1,12 @@
 package com.acco.life.enums;
 
-
+/**
+ * description: 账户类型枚举，定义了系统支持的账户类型
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 public enum AccountType {
     BANK(1, "银行"),
     PLATFORM(2, "平台"),

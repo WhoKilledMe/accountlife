@@ -7,6 +7,13 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 用户组实体类，对应数据库表user_group
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Table("user_group")
 @Data
 public class UserGroup {

@@ -7,15 +7,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author wensenzhang
+ * description: OpenAPI配置类，用于配置Swagger文档信息和全局参数
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
  * @version V1.0.0
- * 星星之火，可以燎原
- * @desc OpenApiConfig
- * @date 2025/7/15 17:17
  */
 @Configuration
 public class OpenApiConfig {
 
+    /**
+     * 配置OpenAPI文档基本信息
+     *
+     * @return OpenAPI对象包含文档元信息
+     */
     @Bean
     public OpenAPI apiInfo() {
         return new OpenAPI()
@@ -24,10 +29,15 @@ public class OpenApiConfig {
                         .version("1.0.0"));
     }
 
+    /**
+     * 创建OperationCustomizer实例，用于添加全局请求参数
+     *
+     * @return OperationCustomizer 自定义操作配置器
+     */
     @Bean
     public OperationCustomizer globalHeaderCustomizer() {
         return (operation, handlerMethod) -> {
-            // 添加 token header
+            // 添加 userId header
             operation.addParametersItem(new io.swagger.v3.oas.models.parameters.Parameter()
                     .in("header")
                     .schema(new io.swagger.v3.oas.models.media.StringSchema())

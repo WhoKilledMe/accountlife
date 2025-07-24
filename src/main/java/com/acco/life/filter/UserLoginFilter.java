@@ -6,6 +6,13 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+/**
+ * description: 用户登录过滤器，用于从请求头中提取用户ID并放入上下文中
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Component
 public class UserLoginFilter implements WebFilter {
 
@@ -21,4 +28,3 @@ public class UserLoginFilter implements WebFilter {
         return chain.filter(exchange);
     }
 }
-

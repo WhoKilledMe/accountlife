@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 /**
- * description: [此处简要描述文件功能]
+ * description: 宁波银行账单文件交易DTO，继承自FileTransactionDto
  *
+ * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
  * @version V1.0.0
- * @date: 2025-07-22 19:48:55
  */
 @Data
 @JsonPropertyOrder({ "transactionDate", "accountingDate", "transactionSummary","transactionAmount" })

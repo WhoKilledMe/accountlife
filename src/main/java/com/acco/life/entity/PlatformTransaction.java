@@ -7,6 +7,13 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
+/**
+ * description: 平台交易实体类，对应数据库表platform_transaction
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Table("platform_transaction")
 @Data
 public class PlatformTransaction {

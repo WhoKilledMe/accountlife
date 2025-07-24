@@ -2,6 +2,13 @@ package com.acco.life.enums;
 
 import lombok.Getter;
 
+/**
+ * description: 交易来源类型枚举，定义了不同的交易来源
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
+ */
 @Getter
 public enum TransactionSourceType {
 

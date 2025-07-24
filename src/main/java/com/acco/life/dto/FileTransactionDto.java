@@ -1,15 +1,12 @@
 package com.acco.life.dto;
 
-import lombok.Data;
-
 /**
- * description: [此处简要描述文件功能]
+ * description: 文件交易数据传输对象，作为各类文件账单DTO的基类
  *
+ * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
  * @version V1.0.0
- * @date: 2025-07-22 19:45:48
  */
-@Data
 //@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 //@JsonSubTypes({
 //        @JsonSubTypes.Type(value = FileTransactionNingBoBank.class, name = "ningbo")})

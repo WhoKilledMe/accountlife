@@ -21,7 +21,11 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author wensenzhang
+ * description: 用户服务实现类，实现用户相关业务逻辑
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
  */
 @Service
 @RequiredArgsConstructor

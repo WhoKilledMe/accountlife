@@ -8,11 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * description: [此处简要描述文件功能]
+ * description: 文件交易工厂类，根据交易来源类型生成对应的交易DTO类型
  *
+ * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
  * @version V1.0.0
- * @date: 2025-07-22 20:02:27
  */
 public class FileTransactionFactory {
 

@@ -5,11 +5,11 @@ import com.acco.life.enums.TransactionSourceType;
 import java.io.InputStream;
 
 /**
- * description: [此处简要描述文件功能]
+ * description: 交易CSV解析服务接口，定义CSV文件解析相关操作
  *
+ * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
  * @version V1.0.0
- * @date: 2025-07-22 20:16:00
  */
 public interface TransactionCsvParseService {
 

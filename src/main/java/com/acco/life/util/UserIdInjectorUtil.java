@@ -4,8 +4,11 @@ import reactor.core.publisher.Mono;
 import java.lang.reflect.Method;
 
 /**
- * UserId注入工具类
- * 用于自动从上下文获取userId并设置到DTO对象中
+ * description: UserId注入工具类，用于自动从上下文获取userId并设置到DTO对象中
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
  */
 public class UserIdInjectorUtil {
     

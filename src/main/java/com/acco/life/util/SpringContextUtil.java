@@ -6,7 +6,11 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 /**
- * Spring上下文工具类，用于获取Spring容器中的Bean
+ * description: Spring上下文工具类，用于获取Spring容器中的Bean
+ *
+ * @date: 2025-07-24 17:54:23
+ * @author wensen.zhang
+ * @version V1.0.0
  */
 @Component
 public class SpringContextUtil implements ApplicationContextAware {
