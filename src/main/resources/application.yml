@@ -10,6 +10,22 @@ spring:
   sql:
     init:
       mode: always
+  mail:
+    host: imap.qq.com # IMAP服务器地址
+    port: 993 # 143 # 993 # IMAP SSL端口
+    username: 772965502@qq.com # 邮箱账号
+    password: deoirnadugwdbbji # UMPZf3nZYgdvJA46 # 邮箱授权码
+    properties:
+      mail:
+        imap:
+          ssl:
+            enable: true
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: true
 server:
   port: 8081
 logging:

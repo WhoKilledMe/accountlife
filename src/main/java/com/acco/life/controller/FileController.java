@@ -32,16 +32,18 @@ public class FileController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<Void>> upload(
             @RequestPart("file") Mono<FilePart> fileMono,
-            @RequestParam("type") TransactionSourceType type
+            @RequestParam("type") TransactionSourceType type,
+            @RequestParam("accountName") String accountName
     ) {
         return fileMono.flatMap(filePart -> {
             Path tempFile = Paths.get(System.getProperty("java.io.tmpdir"), UUID.randomUUID() + "-" + filePart.filename());
             return filePart.transferTo(tempFile)
                     .then(Mono.using(
                             () -> Files.newInputStream(tempFile),
+                            is -> Mono.fromRunnable(() -> transactionCsvParseService.parseCsvFile(is, type, accountName))
+                                    .thenReturn(ResponseEntity.ok().<Void>build()),
                             is -> {
-                                transactionCsvParseService.parseCsvFile(is, type);
-                                return Mono.just(ResponseEntity.ok().<Void>build());
+                                try { Files.deleteIfExists(tempFile); } catch (Exception ignore) {}
                             }
                     ));
         }).onErrorResume(e -> {

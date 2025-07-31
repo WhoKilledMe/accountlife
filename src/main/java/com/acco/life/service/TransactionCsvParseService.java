@@ -5,7 +5,7 @@ import com.acco.life.enums.TransactionSourceType;
 import java.io.InputStream;
 
 /**
- * description: 交易CSV解析服务接口，定义CSV文件解析相关操作
+ * description: 交易CSV解析服务接口，定义CSV文件解析与入库方法
  *
  * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
@@ -13,5 +13,12 @@ import java.io.InputStream;
  */
 public interface TransactionCsvParseService {
 
-    void parseCsvFile(InputStream inputStream, TransactionSourceType transactionSourceType);
+    /**
+     * 解析CSV文件并保存到数据库
+     *
+     * @param inputStream CSV文件输入流
+     * @param transactionSourceType 交易来源类型
+     * @param accountName 账户名称
+     */
+    void parseCsvFile(InputStream inputStream, TransactionSourceType transactionSourceType, String accountName);
 }

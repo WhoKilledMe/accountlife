@@ -23,8 +23,11 @@ public abstract class UserUtil {
      */
     public static Mono<UserDto> getCurrentUser() {
         return Mono.deferContextual(ctx -> {
+            if (!ctx.hasKey("userId")) {
+                return Mono.empty();
+            }
             String userId = ctx.get("userId");
-            if (userId.isEmpty()) {
+            if (userId == null || userId.isEmpty()) {
                 return Mono.empty();
             }
             return SpringContextUtil.getBean(UserService.class).findById(Integer.parseInt(userId));

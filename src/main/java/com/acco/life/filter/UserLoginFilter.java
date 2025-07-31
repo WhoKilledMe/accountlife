@@ -21,8 +21,9 @@ public class UserLoginFilter implements WebFilter {
         String userId = exchange.getRequest().getHeaders().getFirst("userId");
 
         if (userId != null && !userId.isEmpty()) {
-            // 将 userId 放入 exchange 的 attributes 中，供后续使用
-            exchange.getAttributes().put("userId", userId);
+            // 将 userId 放入 reactor 上下文，供全链路使用
+            return chain.filter(exchange)
+                    .contextWrite(ctx -> ctx.put("userId", userId));
         }
 
         return chain.filter(exchange);

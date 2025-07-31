@@ -2,6 +2,7 @@ package com.acco.life;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * description: 个人资产管理系统主应用启动类
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @version V1.0.0
  */
 @SpringBootApplication
+@EnableScheduling
 public class AccountlifeApplication {
 
     public static void main(String[] args) {
