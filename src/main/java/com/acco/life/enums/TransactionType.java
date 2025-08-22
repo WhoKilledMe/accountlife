@@ -20,4 +20,49 @@ public enum TransactionType {
         this.code = code;
         this.name = name;
     }
+    
+    /**
+     * 根据代码获取交易类型
+     */
+    public static TransactionType getByCode(int code) {
+        for (TransactionType type : values()) {
+            if (type.code == code) {
+                return type;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 根据名称获取交易类型
+     */
+    public static TransactionType getByName(String name) {
+        for (TransactionType type : values()) {
+            if (type.name.equals(name)) {
+                return type;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 判断是否为收入类型
+     */
+    public boolean isIncome() {
+        return this == INCOME;
+    }
+    
+    /**
+     * 判断是否为支出类型
+     */
+    public boolean isExpense() {
+        return this == EXPENSE;
+    }
+    
+    /**
+     * 判断是否为转账类型
+     */
+    public boolean isTransfer() {
+        return this == TRANSFER_OUT || this == TRANSFER_IN;
+    }
 }

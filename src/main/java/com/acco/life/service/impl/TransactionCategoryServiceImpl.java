@@ -9,6 +9,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * description: 交易分类服务实现类，实现交易分类的增删改查业务逻辑
@@ -50,5 +56,64 @@ public class TransactionCategoryServiceImpl implements TransactionCategoryServic
     @Override
     public Mono<Void> deleteById(Integer id) {
         return repository.deleteById(id);
+    }
+
+    @Override
+    public Mono<List<TransactionCategoryDto>> findTree() {
+        return repository.findAll()
+                .map(mapper::toDto)
+                .collectList()
+                .map(this::buildTree);
+    }
+
+    private List<TransactionCategoryDto> buildTree(List<TransactionCategoryDto> flatList) {
+        // 排序：type 升序 -> sortOrder 升序 -> id 升序，保证稳定
+        flatList.sort(Comparator
+                .comparing(TransactionCategoryDto::getType, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(TransactionCategoryDto::getSortOrder, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(TransactionCategoryDto::getId, Comparator.nullsLast(Integer::compareTo)));
+
+        Map<Integer, TransactionCategoryDto> idToNode = new HashMap<>();
+        for (TransactionCategoryDto node : flatList) {
+            idToNode.put(node.getId(), node);
+            if (node.getChildren() == null) {
+                node.setChildren(new ArrayList<>());
+            }
+        }
+
+        List<TransactionCategoryDto> roots = new ArrayList<>();
+        for (TransactionCategoryDto node : flatList) {
+            Integer parentId = node.getParentId();
+            if (parentId == null) {
+                roots.add(node);
+            } else {
+                TransactionCategoryDto parent = idToNode.get(parentId);
+                if (parent != null) {
+                    parent.getChildren().add(node);
+                } else {
+                    // 无父节点（数据异常）时，视为根
+                    roots.add(node);
+                }
+            }
+        }
+
+        // 对每个父节点的子节点再按 sortOrder 排序
+        for (TransactionCategoryDto root : roots) {
+            sortRecursively(root);
+        }
+
+        return roots;
+    }
+
+    private void sortRecursively(TransactionCategoryDto node) {
+        if (node.getChildren() == null || node.getChildren().isEmpty()) {
+            return;
+        }
+        node.getChildren().sort(Comparator
+                .comparing(TransactionCategoryDto::getSortOrder, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(TransactionCategoryDto::getId, Comparator.nullsLast(Integer::compareTo)));
+        for (TransactionCategoryDto child : node.getChildren()) {
+            sortRecursively(child);
+        }
     }
 }

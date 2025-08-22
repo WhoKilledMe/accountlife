@@ -35,6 +35,13 @@ public class TransactionCategoryController {
                     Mono.just(ResponseEntity.badRequest().build()));
     }
 
+    @Operation(summary = "以树形结构查询所有 TransactionCategory")
+    @GetMapping("/tree")
+    public Mono<ResponseEntity<List<TransactionCategoryDto>>> listTree() {
+        return service.findTree().map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
     @Operation(summary = "根据 ID 查询 TransactionCategory")
     @GetMapping("/{id}")
     public Mono<ResponseEntity<TransactionCategoryDto>> get(@PathVariable Integer id) {

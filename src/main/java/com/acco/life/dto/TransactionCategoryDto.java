@@ -3,6 +3,9 @@ package com.acco.life.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import java.time.LocalDateTime;
 
 /**
@@ -51,5 +54,8 @@ public class TransactionCategoryDto {
 
     @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer isDeleted;
+
+    @Schema(name = "children", description = "子分类列表，仅树形查询返回时填充", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<TransactionCategoryDto> children = new ArrayList<>();
 
 }

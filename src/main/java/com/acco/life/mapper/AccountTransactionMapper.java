@@ -2,6 +2,7 @@ package com.acco.life.mapper;
 
 import com.acco.life.dto.AccountTransactionDto;
 import com.acco.life.dto.FileTransactionDto;
+import com.acco.life.dto.FileTransactionLabelDetail;
 import com.acco.life.dto.FileTransactionNingBoBank;
 import com.acco.life.entity.AccountTransaction;
 import com.acco.life.enums.TransactionSourceType;
@@ -62,16 +63,46 @@ public interface AccountTransactionMapper {
 
     @Named("determineTransactionType")
     default Integer determineTransactionType(FileTransactionDto fileTransactionDto) {
-        // 简单实现，后续根据业务规则完善
-        if (fileTransactionDto instanceof FileTransactionNingBoBank) {
-            // 根据交易摘要判断交易类型，示例逻辑
-            FileTransactionNingBoBank ningbo = (FileTransactionNingBoBank) fileTransactionDto;
-            String summary = ningbo.getTransactionSummary();
+        // 根据金额判断交易类型，正数为收入，负数为支出
+        if (fileTransactionDto instanceof FileTransactionNingBoBank || fileTransactionDto instanceof FileTransactionLabelDetail) {
+            String amount = null;
+            String summary = null;
+            
+            if (fileTransactionDto instanceof FileTransactionNingBoBank) {
+                FileTransactionNingBoBank ningbo = (FileTransactionNingBoBank) fileTransactionDto;
+                amount = ningbo.getTransactionAmount();
+                summary = ningbo.getTransactionSummary();
+            } else if (fileTransactionDto instanceof FileTransactionLabelDetail) {
+                FileTransactionLabelDetail labelDetail = (FileTransactionLabelDetail) fileTransactionDto;
+                amount = labelDetail.getTransactionAmount();
+                summary = labelDetail.getTransactionSummary();
+            }
+            
+            if (amount != null) {
+                try {
+                    BigDecimal amountValue = new BigDecimal(amount);
+                    if (amountValue.compareTo(BigDecimal.ZERO) > 0) {
+                        return TransactionType.INCOME.code;
+                    } else if (amountValue.compareTo(BigDecimal.ZERO) < 0) {
+                        return TransactionType.EXPENSE.code;
+                    }
+                } catch (NumberFormatException e) {
+                    // 解析失败，根据摘要判断
+                }
+            }
+            
+            // 如果金额无法判断，则根据交易摘要判断
             if (summary != null) {
-                if (summary.contains("收入") || summary.contains("入账")) {
+                if (summary.contains("收入") || summary.contains("入账") || summary.contains("到账") || 
+                    summary.contains("收款") || summary.contains("返现") || summary.contains("退款") ||
+                    summary.contains("报销") || summary.contains("赔偿") || summary.contains("捐赠") ||
+                    summary.contains("红包") || summary.contains("礼金") || summary.contains("中奖") ||
+                    summary.contains("兼职") || summary.contains("副业") || summary.contains("咨询") ||
+                    summary.contains("服务") || summary.contains("工资") || summary.contains("薪水") ||
+                    summary.contains("奖金") || summary.contains("绩效") || summary.contains("提成") ||
+                    summary.contains("补贴") || summary.contains("津贴") || summary.contains("利息") ||
+                    summary.contains("分红")) {
                     return TransactionType.INCOME.code;
-                } else {
-                    return TransactionType.EXPENSE.code;
                 }
             }
         }
@@ -109,15 +140,30 @@ public interface AccountTransactionMapper {
         if (fileTransactionDto instanceof FileTransactionNingBoBank) {
             FileTransactionNingBoBank ningbo = (FileTransactionNingBoBank) fileTransactionDto;
             String transactionDate = ningbo.getTransactionDate();
-            if (transactionDate != null) {
-                // 简单示例，实际可能需要解析具体日期格式
+            if (transactionDate != null && !transactionDate.trim().isEmpty()) {
                 try {
-                    return LocalDateTime.now(); // 实际应该解析transactionDate字符串
+                    // 尝试解析日期格式：2025-07-02
+                    if (transactionDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                        return LocalDateTime.parse(transactionDate + "T00:00:00");
+                    }
+                    // 尝试解析日期格式：2025/07/02
+                    else if (transactionDate.matches("\\d{4}/\\d{2}/\\d{2}")) {
+                        String normalizedDate = transactionDate.replace("/", "-");
+                        return LocalDateTime.parse(normalizedDate + "T00:00:00");
+                    }
+                    // 尝试解析日期格式：20250702
+                    else if (transactionDate.matches("\\d{8}")) {
+                        String year = transactionDate.substring(0, 4);
+                        String month = transactionDate.substring(4, 6);
+                        String day = transactionDate.substring(6, 8);
+                        return LocalDateTime.parse(year + "-" + month + "-" + day + "T00:00:00");
+                    }
                 } catch (Exception e) {
-                    return LocalDateTime.now();
+                    // 解析失败，记录日志
                 }
             }
         }
+        // 如果无法解析，返回当前时间
         return LocalDateTime.now();
     }
 }

@@ -21,4 +21,9 @@ public interface TransactionCategoryService {
      Mono<TransactionCategoryDto> save(Mono<TransactionCategoryDto> entity);
 
      Mono<Void> deleteById(Integer id);
+
+      /**
+       * 以父子树形结构返回所有系统与用户分类
+       */
+      Mono<List<TransactionCategoryDto>> findTree();
 }

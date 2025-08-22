@@ -1,6 +1,7 @@
 package com.acco.life.factory;
 
 import com.acco.life.dto.FileTransactionDto;
+import com.acco.life.dto.FileTransactionLabelDetail;
 import com.acco.life.dto.FileTransactionNingBoBank;
 import com.acco.life.enums.TransactionSourceType;
 
@@ -20,6 +21,7 @@ public class FileTransactionFactory {
 
     static {
         fileTransactionMap.put(TransactionSourceType.NING_BO_CREDIT, FileTransactionNingBoBank.class);
+        fileTransactionMap.put(TransactionSourceType.LABEL_DETAIL, FileTransactionLabelDetail.class);
     }
 
 }

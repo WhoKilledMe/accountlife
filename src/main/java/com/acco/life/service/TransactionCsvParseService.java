@@ -1,6 +1,7 @@
 package com.acco.life.service;
 
 import com.acco.life.enums.TransactionSourceType;
+import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 
@@ -19,6 +20,7 @@ public interface TransactionCsvParseService {
      * @param inputStream CSV文件输入流
      * @param transactionSourceType 交易来源类型
      * @param accountName 账户名称
+     * @return Mono<Void> 表示操作完成
      */
-    void parseCsvFile(InputStream inputStream, TransactionSourceType transactionSourceType, String accountName);
+    Mono<Void> parseCsvFile(InputStream inputStream, TransactionSourceType transactionSourceType, String accountName);
 }

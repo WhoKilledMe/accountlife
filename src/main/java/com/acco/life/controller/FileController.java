@@ -40,10 +40,21 @@ public class FileController {
             return filePart.transferTo(tempFile)
                     .then(Mono.using(
                             () -> Files.newInputStream(tempFile),
-                            is -> Mono.fromRunnable(() -> transactionCsvParseService.parseCsvFile(is, type, accountName))
-                                    .thenReturn(ResponseEntity.ok().<Void>build()),
                             is -> {
-                                try { Files.deleteIfExists(tempFile); } catch (Exception ignore) {}
+                                log.info("开始解析CSV文件，类型: {}, 账户名称: {}", type, accountName);
+                                // 直接调用并订阅响应式流
+                                return transactionCsvParseService.parseCsvFile(is, type, accountName)
+                                        .then(Mono.just(ResponseEntity.ok().<Void>build()))
+                                        .doOnSuccess(result -> log.info("CSV文件解析完成"))
+                                        .doOnError(error -> log.error("CSV文件解析失败", error));
+                            },
+                            is -> {
+                                try { 
+                                    Files.deleteIfExists(tempFile); 
+                                    log.debug("临时文件已删除: {}", tempFile);
+                                } catch (Exception e) { 
+                                    log.warn("删除临时文件失败: {}", tempFile, e);
+                                }
                             }
                     ));
         }).onErrorResume(e -> {

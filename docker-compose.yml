@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # MariaDB数据库
+  mariadb:
+    image: mariadb:10.5
+    container_name: accountlife-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: account_life
+      MYSQL_USER: accountlife
+      MYSQL_PASSWORD: accountlife123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./src/main/resources/sql:/docker-entrypoint-initdb.d
+    networks:
+      - accountlife-network
+
+  # Redis缓存
+  redis:
+    image: redis:6.2-alpine
+    container_name: accountlife-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - accountlife-network
+
+  # AccountLife应用
+  accountlife:
+    build: .
+    container_name: accountlife-app
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_R2DBC_URL: r2dbc:mariadb://mariadb:3306/account_life?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_R2DBC_USERNAME: root
+      SPRING_R2DBC_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - accountlife-network
+
+volumes:
+  mariadb_data:
+  redis_data:
+
+networks:
+  accountlife-network:
+    driver: bridge 

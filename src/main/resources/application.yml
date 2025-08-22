@@ -30,6 +30,39 @@ server:
   port: 8081
 logging:
   level:
+    # R2DBC核心日志 - 显示SQL执行详情
     io.r2dbc.spi.ConnectionFactory: DEBUG
     org.springframework.r2dbc.core.DefaultDatabaseClient: DEBUG
+    
+    # MySQL驱动日志 - 显示SQL语句和参数
     io.r2dbc.mysql.QUERY: DEBUG
+    io.r2dbc.mysql.PARAM: DEBUG
+    io.r2dbc.mysql: DEBUG
+    
+    # Spring Data R2DBC日志
+    org.springframework.data.r2dbc.core.R2dbcEntityTemplate: DEBUG
+    org.springframework.data.r2dbc.repository.support.SimpleR2dbcRepository: DEBUG
+    org.springframework.data.r2dbc: DEBUG
+    
+    # 数据库连接池日志
+    io.r2dbc.pool: DEBUG
+    
+    # 自定义业务日志
+    com.acco.life: DEBUG
+    
+    # 减少其他框架的日志噪音
+    org.springframework.web: INFO
+    org.springframework.boot: INFO
+    reactor.netty: INFO
+    org.springframework.security: INFO
+    
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# 自定义SQL日志配置
+sql:
+  logging:
+    enabled: true
+    show-params: true
+    format-sql: true

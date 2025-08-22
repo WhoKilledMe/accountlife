@@ -13,9 +13,10 @@ import lombok.Getter;
 public enum TransactionSourceType {
 
     NING_BO_CREDIT(0, "宁波银行信用卡"),
-    BANK(1, "银行"),
-    PLATFORM(2, "平台"),
-    CREDIT_WALLET(3, "信用钱包");
+    LABEL_DETAIL(1, "LabelDetail账单"),
+    BANK(2, "银行"),
+    PLATFORM(3, "平台"),
+    CREDIT_WALLET(4, "信用钱包");
 
     public final int code;
     public final String name;

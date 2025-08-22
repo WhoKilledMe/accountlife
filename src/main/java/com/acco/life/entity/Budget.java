@@ -6,121 +6,119 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * description: 资产账户实体类，对应数据库表asset_account
+ * 预算实体类
  *
- * @date: 2025-07-24 17:54:23
  * @author wensen.zhang
  * @version V1.0.0
  */
-@Table("asset_account")
+@Table("budget")
 @Data
-public class AssetAccount {
-
-
+public class Budget {
+    
     /**
-     * 账户ID
+     * 预算ID
      */
     @Id
     @Column("id")
     private Integer id;
-
-    /**
-     * 所属用户
-     */
     
+    /**
+     * 用户ID
+     */
     @Column("user_id")
     private Integer userId;
-
-    /**
-     * 账户名称（如 招商银行、花呗）
-     */
     
+    /**
+     * 预算名称
+     */
     @Column("name")
     private String name;
-
-    /**
-     * 账户类型：1-bank，2-platform，3-credit_wallet，4-wallet
-     */
     
+    /**
+     * 预算类型：1-月度预算，2-年度预算，3-分类预算
+     */
     @Column("type")
     private Integer type;
-
-    /**
-     * 平台标识（如 ALIPAY、MEITUAN）
-     */
     
-    @Column("platform_code")
-    private String platformCode;
-
     /**
-     * 银行卡号/平台账号
+     * 分类ID（分类预算时使用）
      */
+    @Column("category_id")
+    private Integer categoryId;
     
-    @Column("account_number")
-    private String accountNumber;
-
     /**
-     * 是否为虚拟账户
+     * 预算金额
      */
+    @Column("amount")
+    private BigDecimal amount;
     
-    @Column("is_virtual")
-    private Boolean isVirtual;
-
     /**
-     * 信用额度，仅信用钱包用
+     * 已使用金额
      */
+    @Column("used_amount")
+    private BigDecimal usedAmount;
     
-    @Column("credit_limit")
-    private BigDecimal creditLimit;
-
     /**
-     * 账户余额
+     * 预算开始日期
      */
-    @Column("balance")
-    private BigDecimal balance;
-
-    /**
-     * 币种
-     */
+    @Column("start_date")
+    private LocalDate startDate;
     
-    @Column("currency")
-    private String currency;
-
+    /**
+     * 预算结束日期
+     */
+    @Column("end_date")
+    private LocalDate endDate;
+    
+    /**
+     * 预算状态：1-进行中，2-已完成，3-已超支
+     */
+    @Column("status")
+    private Integer status;
+    
+    /**
+     * 提醒阈值（百分比）
+     */
+    @Column("alert_threshold")
+    private BigDecimal alertThreshold;
+    
+    /**
+     * 备注
+     */
+    @Column("remark")
+    private String remark;
+    
     /**
      * 创建人
      */
-    
     @Column("created_by")
     private String createdBy;
-
+    
     /**
      * 创建时间
      */
-    
     @Column("created_at")
     private LocalDateTime createdAt;
-
+    
     /**
      * 修改人
      */
-    
     @Column("updated_by")
     private String updatedBy;
-
+    
     /**
      * 修改时间
      */
-    
     @Column("updated_at")
     private LocalDateTime updatedAt;
-
+    
     /**
      * 是否删除（0-否，1-是）
      */
-    
     @Column("is_deleted")
     private Integer isDeleted;
-}
+} 

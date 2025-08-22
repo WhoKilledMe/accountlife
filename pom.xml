@@ -29,7 +29,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>24</java.version>
         <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
     <dependencies>
@@ -85,6 +85,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.38</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
@@ -132,13 +133,13 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version> <!-- 最新稳定版 -->
                 <configuration>
-                    <source>21</source>  <!-- 你的 Java 版本 -->
-                    <target>21</target>
+                    <source>24</source>  <!-- 你的 Java 版本 -->
+                    <target>24</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.30</version> <!-- 如果你用了 @Data 等 -->
+                            <version>1.18.38</version> <!-- 支持JDK 24 -->
                         </path>
                         <path>
                             <groupId>org.mapstruct</groupId>
