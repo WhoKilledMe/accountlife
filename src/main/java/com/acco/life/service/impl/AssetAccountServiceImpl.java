@@ -1,6 +1,7 @@
 package com.acco.life.service.impl;
 
 import com.acco.life.dto.AssetAccountDto;
+import com.acco.life.common.PageResponse;
 import com.acco.life.mapper.AssetAccountMapper;
 import com.acco.life.repository.AssetAccountRepository;
 import com.acco.life.service.AssetAccountService;
@@ -22,6 +23,7 @@ import java.util.List;
 public class AssetAccountServiceImpl implements AssetAccountService {
 
     private final AssetAccountRepository repository;
+    
 
     private final AssetAccountMapper mapper;
 
@@ -49,5 +51,30 @@ public class AssetAccountServiceImpl implements AssetAccountService {
     @Override
     public Mono<Void> deleteById(Integer id) {
         return repository.deleteById(id);
+    }
+
+    @Override
+    public Mono<PageResponse<AssetAccountDto>> page(AssetAccountDto filter, int page, int size) {
+        if (filter == null) {
+            filter = new AssetAccountDto();
+        }
+        final int currentPage = Math.max(page, 0);
+        final int pageSize = Math.max(size, 1);
+        long offset = (long) currentPage * pageSize;
+        long limit = pageSize;
+
+        String likeName = (filter.getName() == null || filter.getName().isEmpty()) ? null : "%" + filter.getName() + "%";
+        String likePlatform = (filter.getPlatformCode() == null || filter.getPlatformCode().isEmpty()) ? null : "%" + filter.getPlatformCode() + "%";
+        String likeAccount = (filter.getAccountNumber() == null || filter.getAccountNumber().isEmpty()) ? null : "%" + filter.getAccountNumber() + "%";
+        Integer userId = filter.getUserId();
+
+        Mono<java.util.List<AssetAccountDto>> dataMono = repository.search(likeName, likePlatform, likeAccount, userId, limit, offset)
+                .map(mapper::toDto)
+                .collectList();
+
+        Mono<Long> countMono = repository.countSearch(likeName, likePlatform, likeAccount, userId);
+
+        return reactor.core.publisher.Mono.zip(dataMono, countMono)
+                .map(tuple -> PageResponse.of(tuple.getT1(), currentPage, pageSize, tuple.getT2()));
     }
 }

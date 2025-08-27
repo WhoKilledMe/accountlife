@@ -26,4 +26,19 @@ public class FileTransactionNingBoBank extends FileTransactionDto {
 
     @JsonAlias({"交易金额"})
     private String transactionAmount;
+
+    public void setTransactionAmount(String transactionAmount) {
+        if (transactionAmount != null && !transactionAmount.isBlank()) {
+            try {
+                // 转成 BigDecimal 取相反数再转回字符串
+                this.transactionAmount = new java.math.BigDecimal(transactionAmount)
+                        .negate()
+                        .toPlainString();
+            } catch (NumberFormatException e) {
+                this.transactionAmount = transactionAmount;
+            }
+        } else {
+            this.transactionAmount = transactionAmount;
+        }
+    }
 }

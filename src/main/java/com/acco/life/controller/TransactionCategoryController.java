@@ -1,6 +1,7 @@
 package com.acco.life.controller;
 
 import com.acco.life.dto.TransactionCategoryDto;
+import com.acco.life.common.PageResponse;
 import com.acco.life.service.TransactionCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +34,18 @@ public class TransactionCategoryController {
         return service.findAll().map(ResponseEntity::ok)
                     .onErrorResume(e ->
                     Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "分页查询 TransactionCategory")
+    @GetMapping("/page")
+    public Mono<ResponseEntity<PageResponse<TransactionCategoryDto>>> page(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        return service.findAll()
+                .map(list -> PageResponse.fromList(list, page, size))
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "以树形结构查询所有 TransactionCategory")

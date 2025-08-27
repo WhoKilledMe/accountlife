@@ -1,6 +1,7 @@
 package com.acco.life.controller;
 
 import com.acco.life.common.ApiResponse;
+import com.acco.life.common.PageResponse;
 import com.acco.life.dto.BudgetDto;
 import com.acco.life.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +36,16 @@ public class BudgetController {
             @Parameter(description = "用户ID") @PathVariable Integer userId) {
         return budgetService.findByUserId(userId)
                 .map(ApiResponse::success);
+    }
+
+    @Operation(summary = "分页查询用户预算")
+    @GetMapping("/user/{userId}/page")
+    public Mono<ApiResponse<PageResponse<BudgetDto>>> pageByUserId(
+            @Parameter(description = "用户ID") @PathVariable Integer userId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
+        return budgetService.findByUserId(userId)
+                .map(list -> ApiResponse.success(PageResponse.fromList(list, page, size)));
     }
     
     @Operation(summary = "根据ID查询预算")

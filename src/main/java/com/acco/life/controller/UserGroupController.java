@@ -1,6 +1,7 @@
 package com.acco.life.controller;
 
 import com.acco.life.dto.UserGroupDto;
+import com.acco.life.common.PageResponse;
 import com.acco.life.service.UserGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +33,18 @@ public class UserGroupController {
         return service.findAll().map(ResponseEntity::ok)
                     .onErrorResume(e ->
                     Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "分页查询 UserGroup")
+    @GetMapping("/page")
+    public Mono<ResponseEntity<PageResponse<UserGroupDto>>> page(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        return service.findAll()
+                .map(list -> PageResponse.fromList(list, page, size))
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "根据 ID 查询 UserGroup")

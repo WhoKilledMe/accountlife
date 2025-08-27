@@ -1,6 +1,7 @@
 package com.acco.life.controller;
 
 import com.acco.life.dto.AssetAccountDto;
+import com.acco.life.common.PageResponse;
 import com.acco.life.service.AssetAccountService;
 import com.acco.life.util.UserIdInjectorUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,18 @@ public class AssetAccountController {
         return service.findAll().map(ResponseEntity::ok)
                     .onErrorResume(e ->
                     Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "分页查询 AssetAccount（数据库分页+模糊搜索）")
+    @PostMapping("/page")
+    public Mono<ResponseEntity<PageResponse<AssetAccountDto>>> page(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestBody(required = false) AssetAccountDto filter
+    ) {
+        return service.page(filter, page, size)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "根据 ID 查询 AssetAccount")

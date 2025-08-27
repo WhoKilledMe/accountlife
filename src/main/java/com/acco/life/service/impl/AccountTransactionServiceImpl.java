@@ -1,6 +1,7 @@
 package com.acco.life.service.impl;
 
 import com.acco.life.dto.AccountTransactionDto;
+import com.acco.life.common.PageResponse;
 import com.acco.life.mapper.AccountTransactionMapper;
 import com.acco.life.repository.AccountTransactionRepository;
 import com.acco.life.service.AccountTransactionService;
@@ -23,6 +24,7 @@ import java.util.List;
 public class AccountTransactionServiceImpl implements AccountTransactionService {
 
     private final AccountTransactionRepository repository;
+    
 
     private final AccountTransactionMapper mapper;
 
@@ -50,5 +52,29 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
     @Override
     public Mono<Void> deleteById(Integer id) {
         return repository.deleteById(id);
+    }
+
+    @Override
+    public Mono<PageResponse<AccountTransactionDto>> page(AccountTransactionDto filter, int page, int size) {
+        if (filter == null) {
+            filter = new AccountTransactionDto();
+        }
+        final int currentPage = Math.max(page, 0);
+        final int pageSize = Math.max(size, 1);
+        long offset = (long) currentPage * pageSize;
+        long limit = pageSize;
+
+        String likeDesc = (filter.getDescription() == null || filter.getDescription().isEmpty()) ? null : "%" + filter.getDescription() + "%";
+        Integer userId = filter.getUserId();
+        Integer accountId = filter.getAccountId();
+
+        Mono<List<AccountTransactionDto>> dataMono = repository.search(likeDesc, userId, accountId, limit, offset)
+                .map(mapper::toDto)
+                .collectList();
+
+        Mono<Long> countMono = repository.countSearch(likeDesc, userId, accountId);
+
+        return Mono.zip(dataMono, countMono)
+                .map(tuple -> PageResponse.of(tuple.getT1(), currentPage, pageSize, tuple.getT2()));
     }
 }

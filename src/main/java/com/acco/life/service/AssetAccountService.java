@@ -1,6 +1,7 @@
 package com.acco.life.service;
 
 import com.acco.life.dto.AssetAccountDto;
+import com.acco.life.common.PageResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -21,4 +22,9 @@ public interface AssetAccountService {
      Mono<AssetAccountDto> save(Mono<AssetAccountDto> entity);
 
      Mono<Void> deleteById(Integer id);
+
+     /**
+      * 数据库分页+模糊搜索
+      */
+     Mono<PageResponse<AssetAccountDto>> page(AssetAccountDto filter, int page, int size);
 }
