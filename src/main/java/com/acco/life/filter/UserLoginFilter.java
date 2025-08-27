@@ -1,5 +1,9 @@
 package com.acco.life.filter;
 
+import com.acco.life.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -16,16 +20,38 @@ import reactor.core.publisher.Mono;
 @Component
 public class UserLoginFilter implements WebFilter {
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String userId = exchange.getRequest().getHeaders().getFirst("userId");
+    @Autowired
+    private AuthService authService;
 
-        if (userId != null && !userId.isEmpty()) {
-            // 使用更直接的方式设置上下文
-            return chain.filter(exchange)
-                    .contextWrite(ctx -> ctx.put("userId", userId));
+    @Override
+    public @NonNull Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
+
+        String path = exchange.getRequest().getPath().value();
+        if ("/api/auth/login".equals(path) || "/api/auth/logout".equals(path)) {
+            return chain.filter(exchange);
         }
 
-        return chain.filter(exchange);
+        String tokenHeader = exchange.getRequest().getHeaders().getFirst("token");
+        String authorization = exchange.getRequest().getHeaders().getFirst("Authorization");
+        String token = null;
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            token = authorization.substring(7);
+        }
+        if (token == null && tokenHeader != null && !tokenHeader.isEmpty()) {
+            token = tokenHeader;
+        }
+
+        if (token == null) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+
+        return authService.getUserIdByToken(token)
+                .flatMap(uid -> chain.filter(exchange)
+                        .contextWrite(ctx -> ctx.put("userId", String.valueOf(uid))))
+                .switchIfEmpty(Mono.defer(() -> {
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
+                }));
     }
 }

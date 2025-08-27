@@ -41,8 +41,8 @@ public class OpenApiConfig {
             operation.addParametersItem(new io.swagger.v3.oas.models.parameters.Parameter()
                     .in("header")
                     .schema(new io.swagger.v3.oas.models.media.StringSchema())
-                    .name("userId")
-                    .description("用户ID")
+                    .name("token")
+                    .description("token")
                     .required(false));
 
             return operation;

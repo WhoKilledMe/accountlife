@@ -45,6 +45,12 @@ public class User {
     private String phone;
 
     /**
+     * 加盐MD5密文，格式：salt:md5
+     */
+    @Column("password_hash")
+    private String password;
+
+    /**
      * 创建人
      */
     @Column("created_by")

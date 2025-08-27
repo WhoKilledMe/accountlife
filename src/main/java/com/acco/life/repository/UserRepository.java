@@ -2,6 +2,7 @@ package com.acco.life.repository;
 
 import com.acco.life.entity.User;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
 
 /**
  * description: 用户仓库接口，提供用户的数据库操作
@@ -11,4 +12,5 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
  * @version V1.0.0
  */
 public interface UserRepository extends ReactiveCrudRepository<User, Integer> {
+    Mono<User> findByUsername(String username);
 }

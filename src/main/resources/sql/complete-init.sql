@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
     `email` VARCHAR(100) UNIQUE COMMENT '邮箱',
     `phone` VARCHAR(20) COMMENT '手机号',
-    `password_hash` VARCHAR(255) COMMENT '密码哈希',
+    `password` VARCHAR(255) COMMENT '加盐MD5密文，格式：salt:md5',
     `status` TINYINT DEFAULT 1 COMMENT '状态：1-正常，0-禁用',
     `created_by` VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

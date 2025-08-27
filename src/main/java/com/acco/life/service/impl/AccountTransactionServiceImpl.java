@@ -62,13 +62,12 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
         final int currentPage = Math.max(page, 0);
         final int pageSize = Math.max(size, 1);
         long offset = (long) currentPage * pageSize;
-        long limit = pageSize;
 
         String likeDesc = (filter.getDescription() == null || filter.getDescription().isEmpty()) ? null : "%" + filter.getDescription() + "%";
         Integer userId = filter.getUserId();
         Integer accountId = filter.getAccountId();
 
-        Mono<List<AccountTransactionDto>> dataMono = repository.search(likeDesc, userId, accountId, limit, offset)
+        Mono<List<AccountTransactionDto>> dataMono = repository.search(likeDesc, userId, accountId, pageSize, offset)
                 .map(mapper::toDto)
                 .collectList();
 

@@ -2,14 +2,17 @@
 !define table(x) class x << (T,#FFAAAA) >>
 hide circle
 
-table(user_account) {
+' 用户表
+table(user) {
   + id : BIGINT        -- 用户ID
   username : VARCHAR   -- 用户名
   email : VARCHAR      -- 邮箱
   phone : VARCHAR      -- 手机号
+  password : VARCHAR   -- 加盐MD5（salt:md5）
   created_at : DATETIME -- 创建时间
 }
 
+' 用户组
 table(user_group) {
   + id : BIGINT         -- 用户组ID
   name : VARCHAR        -- 组名称
@@ -17,53 +20,58 @@ table(user_group) {
   created_at : DATETIME -- 创建时间
 }
 
+' 用户组成员
 table(user_group_member) {
   + id : BIGINT        -- 关系ID
   group_id : BIGINT    -- 用户组ID
   user_id : BIGINT     -- 用户ID
-  role : ENUM          -- 角色：owner组长/member成员
+  role : TINYINT       -- 角色：1-owner/2-member
   joined_at : DATETIME -- 加入时间
 }
 
+' 资产账户
 table(asset_account) {
   + id : BIGINT             -- 账户ID
   user_id : BIGINT          -- 所属用户
   name : VARCHAR            -- 账户名称
-  type : ENUM               -- 账户类型（bank/platform/credit_wallet/wallet）
+  type : TINYINT            -- 1-bank/2-platform/3-credit_wallet/4-wallet
   platform_code : VARCHAR   -- 平台编码
   account_number : VARCHAR  -- 卡号或账号
-  is_virtual : BOOLEAN      -- 是否为虚拟账户
+  is_virtual : BOOLEAN      -- 是否虚拟
   credit_limit : DECIMAL    -- 信用额度
   currency : VARCHAR        -- 币种
   created_at : DATETIME     -- 创建时间
 }
 
-table(account_transaction) {
-  + id : BIGINT               -- 交易ID
-  user_id : BIGINT            -- 所属用户
-  account_id : BIGINT         -- 账户ID
-  type : ENUM                 -- 交易类型（收入/支出/转出/转入）
-  amount : DECIMAL            -- 金额
-  category_id : BIGINT        -- 分类ID
-  related_transaction_id : BIGINT -- 关联交易
-  description : VARCHAR       -- 交易说明
-  transaction_time : DATETIME -- 实际发生时间
-  source_type : ENUM          -- 来源类型（bank/platform/credit_wallet）
-  source_ref : VARCHAR        -- 原始流水号
-  statement_id : BIGINT       -- 所属账单ID
-  created_at : DATETIME       -- 创建时间
-}
-
+' 分类
 table(transaction_category) {
   + id : BIGINT         -- 分类ID
   name : VARCHAR        -- 分类名称
-  type : ENUM           -- 类型：income-收入/expense-支出
+  type : TINYINT        -- 1-income/2-expense
   parent_id : BIGINT    -- 父分类ID
   icon : VARCHAR        -- 图标
   user_id : BIGINT      -- 用户ID（null为系统级）
   sort_order : INT      -- 排序
 }
 
+' 交易明细
+table(account_transaction) {
+  + id : BIGINT               -- 交易ID
+  user_id : BIGINT            -- 所属用户
+  account_id : BIGINT         -- 发生账户
+  type : TINYINT              -- 1-income/2-expense/3-transfer_out/4-transfer_in
+  amount : DECIMAL            -- 金额
+  category_id : BIGINT        -- 分类ID
+  related_transaction_id : BIGINT -- 关联交易
+  description : VARCHAR       -- 摘要
+  transaction_time : DATETIME -- 实际发生时间
+  source_type : TINYINT       -- 来源类型
+  source_ref : VARCHAR        -- 原始标识
+  statement_id : BIGINT       -- 账单归属ID
+  created_at : DATETIME       -- 创建时间
+}
+
+' 平台原始账单
 table(platform_transaction) {
   + id : BIGINT                -- 平台账单ID
   user_id : BIGINT             -- 用户ID
@@ -74,13 +82,14 @@ table(platform_transaction) {
   created_at : DATETIME        -- 创建时间
 }
 
+' 投资资产
 table(investment_asset) {
-  + id : BIGINT             -- 投资ID
+  + id : BIGINT             -- 投资资产ID
   user_id : BIGINT          -- 用户ID
-  account_id : BIGINT       -- 账户ID
-  code : VARCHAR            -- 股票/基金代码
+  account_id : BIGINT       -- 关联账户
+  code : VARCHAR            -- 代码
   name : VARCHAR            -- 名称
-  type : ENUM               -- 类型（stock/fund/bond）
+  type : TINYINT            -- 1-stock/2-fund/3-bond
   quantity : DECIMAL        -- 持仓数量
   cost_price : DECIMAL      -- 成本价
   market_price : DECIMAL    -- 市价
@@ -88,11 +97,12 @@ table(investment_asset) {
   last_updated : DATETIME   -- 更新时间
 }
 
+' 固定资产
 table(fixed_asset) {
   + id : BIGINT            -- 固定资产ID
   user_id : BIGINT         -- 用户ID
   name : VARCHAR           -- 名称
-  type : ENUM              -- 类型（property/vehicle/equipment/other）
+  type : TINYINT           -- 1-property/2-vehicle/3-equipment/4-other
   value : DECIMAL          -- 评估/购入价
   purchase_date : DATE     -- 购买日期
   location : VARCHAR       -- 位置
@@ -100,34 +110,96 @@ table(fixed_asset) {
   created_at : DATETIME    -- 创建时间
 }
 
+' 信用钱包账单
 table(credit_wallet_statement) {
   + id : BIGINT              -- 账单ID
-  account_id : BIGINT        -- 信用钱包ID
+  account_id : BIGINT        -- 信用钱包账户ID
   user_id : BIGINT           -- 用户ID
   billing_period_start : DATE -- 账期开始
   billing_period_end : DATE   -- 账期结束
   total_amount : DECIMAL     -- 应还金额
   repay_due_date : DATE      -- 到期日
   repay_date : DATE          -- 实际还款日
-  status : ENUM              -- 状态（open/paid/overdue）
+  status : TINYINT           -- 1-open/2-paid/3-overdue
   created_at : DATETIME      -- 创建时间
 }
 
-' 关联关系
-user_account ||--o{ asset_account : has
-user_account ||--o{ account_transaction : logs
-user_account ||--o{ transaction_category : defines
-user_account ||--o{ platform_transaction : owns
-user_account ||--o{ investment_asset : holds
-user_account ||--o{ fixed_asset : holds
-user_account ||--o{ credit_wallet_statement : owns
+' 预算
+table(budget) {
+  + id : BIGINT          -- 预算ID
+  user_id : BIGINT       -- 用户ID
+  category_id : BIGINT   -- 分类ID
+  amount : DECIMAL       -- 预算金额
+  period_type : TINYINT  -- 1-monthly/2-quarterly/3-yearly
+  start_date : DATE      -- 开始日期
+  end_date : DATE        -- 结束日期
+}
 
-user_account ||--o{ user_group_member : joins
+' 报表配置
+table(report_config) {
+  + id : BIGINT        -- 报表配置ID
+  user_id : BIGINT     -- 用户ID
+  name : VARCHAR       -- 报表名称
+  type : TINYINT       -- 1-category_summary/2-trend_analysis
+  config : TEXT        -- 配置JSON
+  created_at : DATETIME -- 创建时间
+}
+
+' 账户余额历史
+table(account_balance_history) {
+  + id : BIGINT       -- 余额历史ID
+  account_id : BIGINT -- 账户ID
+  user_id : BIGINT    -- 用户ID
+  balance : DECIMAL   -- 余额
+  currency : VARCHAR  -- 币种
+  record_date : DATE  -- 记录日期
+}
+
+' 标签
+table(tag) {
+  + id : BIGINT      -- 标签ID
+  user_id : BIGINT   -- 用户ID
+  name : VARCHAR     -- 标签名称
+  color : VARCHAR    -- 标签颜色
+  created_at : DATETIME -- 创建时间
+}
+
+' 交易-标签 关联
+table(transaction_tag) {
+  + id : BIGINT           -- 关联ID
+  transaction_id : BIGINT -- 交易ID
+  tag_id : BIGINT         -- 标签ID
+  created_at : DATETIME   -- 创建时间
+}
+
+' 关联关系
+user ||--o{ asset_account : has
+user ||--o{ account_transaction : logs
+user ||--o{ transaction_category : defines
+user ||--o{ platform_transaction : owns
+user ||--o{ investment_asset : holds
+user ||--o{ fixed_asset : holds
+user ||--o{ credit_wallet_statement : owns
+user ||--o{ budget : owns
+user ||--o{ report_config : configures
+user ||--o{ account_balance_history : balances
+user ||--o{ tag : owns
+
+user ||--o{ user_group_member : joins
 user_group ||--o{ user_group_member : includes
 
 asset_account ||--o{ account_transaction : logs
 transaction_category ||--o{ account_transaction : classifies
+transaction_category ||--o{ transaction_category : parent
 account_transaction ||--|| account_transaction : relates
 credit_wallet_statement ||--o{ account_transaction : includes
+
+asset_account ||--o{ investment_asset : links
+asset_account ||--o{ account_balance_history : balances
+
+account_transaction ||--o{ transaction_tag : has
+tag ||--o{ transaction_tag : marks
+
+platform_transaction ||--|| account_transaction : maps
 
 @enduml

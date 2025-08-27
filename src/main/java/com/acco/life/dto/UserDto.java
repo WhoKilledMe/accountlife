@@ -28,6 +28,9 @@ public class UserDto {
     @Schema(name = "phone", description = "手机号")
     private String phone;
 
+    @Schema(name = "password", description = "明文密码，仅创建或修改时传入", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String password;
+
     @Schema(name = "createdBy", description = "创建人", accessMode = Schema.AccessMode.READ_ONLY)
     private String createdBy;
 

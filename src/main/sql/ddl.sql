@@ -6,6 +6,7 @@ CREATE TABLE user
     username   VARCHAR(100) COMMENT '用户名',
     email      VARCHAR(100) COMMENT '邮箱',
     phone      VARCHAR(20) COMMENT '手机号',
+    password   VARCHAR(255) COMMENT '加盐MD5密文，格式：salt:md5',
     created_by VARCHAR(50) DEFAULT 'system' COMMENT '创建人',
     created_at DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_by VARCHAR(50) DEFAULT 'system' COMMENT '修改人',

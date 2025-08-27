@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+import com.acco.life.util.PasswordUtil;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -77,6 +78,16 @@ public class UserServiceImpl implements UserService {
 
     private Mono<UserDto> saveUserAccount(UserDto dto) {
         return Mono.just(dto)
+                .map(in -> {
+                    if (in.getPassword() != null && !in.getPassword().isEmpty()) {
+                        String salt = PasswordUtil.generateSalt(16);
+                        String salted = PasswordUtil.md5WithSalt(in.getPassword(), salt);
+                        in.setPassword(salted);
+                    } else {
+                        in.setPassword(null);
+                    }
+                    return in;
+                })
                 .map(mapper::toEntity)
                 .flatMap(repository::save)
                 .map(entity -> mapper.dtoToDto(dto, entity.getId(),dto.getGroupId(), 1));
@@ -108,5 +119,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<Void> deleteById(Integer id) {
         return repository.deleteById(id);
+    }
+
+    public static void main(String[] args) {
+        String salt = PasswordUtil.generateSalt(16);
+        String salted = PasswordUtil.md5WithSalt("123456", salt);
+        System.out.println(salted);
     }
 }
