@@ -4,10 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 预算数据传输对象
@@ -19,12 +19,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BudgetDto {
-    
-    /**
-     * 预算ID
-     */
-    private Integer id;
+@EqualsAndHashCode(callSuper = true)
+public class BudgetDto extends BaseColumnDto {
     
     /**
      * 用户ID
@@ -100,24 +96,4 @@ public class BudgetDto {
      * 备注
      */
     private String remark;
-    
-    /**
-     * 创建人
-     */
-    private String createdBy;
-    
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createdAt;
-    
-    /**
-     * 修改人
-     */
-    private String updatedBy;
-    
-    /**
-     * 修改时间
-     */
-    private LocalDateTime updatedAt;
 } 

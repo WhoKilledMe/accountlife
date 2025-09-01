@@ -24,7 +24,6 @@ import java.util.List;
 public class AccountTransactionServiceImpl implements AccountTransactionService {
 
     private final AccountTransactionRepository repository;
-    
 
     private final AccountTransactionMapper mapper;
 
