@@ -1,13 +1,12 @@
 package com.acco.life.entity;
 
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 预算实体类
@@ -15,16 +14,10 @@ import java.time.LocalDateTime;
  * @author wensen.zhang
  * @version V1.0.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Table("budget")
 @Data
-public class Budget {
-    
-    /**
-     * 预算ID
-     */
-    @Id
-    @Column("id")
-    private Integer id;
+public class Budget extends BaseColumnEntity {
     
     /**
      * 用户ID
@@ -91,34 +84,4 @@ public class Budget {
      */
     @Column("remark")
     private String remark;
-    
-    /**
-     * 创建人
-     */
-    @Column("created_by")
-    private String createdBy;
-    
-    /**
-     * 创建时间
-     */
-    @Column("created_at")
-    private LocalDateTime createdAt;
-    
-    /**
-     * 修改人
-     */
-    @Column("updated_by")
-    private String updatedBy;
-    
-    /**
-     * 修改时间
-     */
-    @Column("updated_at")
-    private LocalDateTime updatedAt;
-    
-    /**
-     * 是否删除（0-否，1-是）
-     */
-    @Column("is_deleted")
-    private Integer isDeleted;
 } 

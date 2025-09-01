@@ -4,11 +4,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.Column;
-
-import java.time.LocalDateTime;
 
 /**
  * 分类关键词映射实体
@@ -17,11 +15,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(callSuper = true)
 @Table("category_keyword_mapping")
-public class CategoryKeywordMapping {
-    
-    @Id
-    private Integer id;
+public class CategoryKeywordMapping extends BaseColumnEntity {
     
     @Column("category_id")
     private Integer categoryId;
@@ -35,10 +31,4 @@ public class CategoryKeywordMapping {
     
     @Column("is_active")
     private Boolean isActive;
-    
-    @Column("created_time")
-    private LocalDateTime createdTime;
-    
-    @Column("updated_time")
-    private LocalDateTime updatedTime;
 } 
