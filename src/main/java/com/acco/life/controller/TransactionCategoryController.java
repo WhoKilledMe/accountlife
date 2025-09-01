@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * description: 交易分类控制器，提供交易分类的增删改查接口
@@ -44,6 +45,27 @@ public class TransactionCategoryController {
     ) {
         return service.findAll()
                 .map(list -> PageResponse.fromList(list, page, size))
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "下拉选择-分页查询 TransactionCategory（支持名称模糊查询）")
+    @GetMapping("/select")
+    public Mono<ResponseEntity<PageResponse<TransactionCategoryDto>>> select(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "categoryName", required = false) String categoryName
+    ) {
+        return service.findAll()
+                .map(list -> {
+                    List<TransactionCategoryDto> filtered = list;
+                    if (categoryName != null && !categoryName.isEmpty()) {
+                        filtered = list.stream()
+                                .filter(c -> c.getName() != null && c.getName().toLowerCase().contains(categoryName.toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    return PageResponse.fromList(filtered, page, size);
+                })
                 .map(ResponseEntity::ok)
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }

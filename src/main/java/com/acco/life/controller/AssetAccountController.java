@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * description: 资产账户控制器，提供资产账户的增删改查接口
@@ -80,5 +81,26 @@ public class AssetAccountController {
     @DeleteMapping("/{id}")
     public Mono<Void> delete(@PathVariable Integer id) {
         return service.deleteById(id);
+    }
+
+    @Operation(summary = "下拉选择-分页查询 AssetAccount（支持名称模糊查询）")
+    @GetMapping("/select")
+    public Mono<ResponseEntity<PageResponse<AssetAccountDto>>> select(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "accountName", required = false) String accountName
+    ) {
+        return service.findAll()
+                .map(list -> {
+                    List<AssetAccountDto> filtered = list;
+                    if (accountName != null && !accountName.isEmpty()) {
+                        filtered = list.stream()
+                                .filter(a -> a.getName() != null && a.getName().toLowerCase().contains(accountName.toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    return PageResponse.fromList(filtered, page, size);
+                })
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 }

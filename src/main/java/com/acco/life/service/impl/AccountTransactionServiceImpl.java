@@ -4,6 +4,8 @@ import com.acco.life.dto.AccountTransactionDto;
 import com.acco.life.common.PageResponse;
 import com.acco.life.mapper.AccountTransactionMapper;
 import com.acco.life.repository.AccountTransactionRepository;
+import com.acco.life.repository.AssetAccountRepository;
+import com.acco.life.repository.TransactionCategoryRepository;
 import com.acco.life.service.AccountTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,8 @@ import java.util.List;
 public class AccountTransactionServiceImpl implements AccountTransactionService {
 
     private final AccountTransactionRepository repository;
-    
+    private final TransactionCategoryRepository categoryRepository;
+    private final AssetAccountRepository assetAccountRepository;
 
     private final AccountTransactionMapper mapper;
 
@@ -32,13 +35,16 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
     @Override
     public Mono<List<AccountTransactionDto>> findAll() {
         return repository.findAll()
-                .map(mapper::toDto).collectList();
+                .map(mapper::toDto)
+                .flatMap(dto -> enrichWithCategoryAndAccountName(dto))
+                .collectList();
     }
 
     @Override
     public Mono<AccountTransactionDto> findById(Integer id) {
         return repository.findById(id)
-        .map(mapper::toDto);
+        .map(mapper::toDto)
+        .flatMap(dto -> enrichWithCategoryAndAccountName(dto));
     }
 
     @Override
@@ -69,11 +75,39 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
 
         Mono<List<AccountTransactionDto>> dataMono = repository.search(likeDesc, userId, accountId, pageSize, offset)
                 .map(mapper::toDto)
+                .flatMap(dto -> enrichWithCategoryAndAccountName(dto))
                 .collectList();
 
         Mono<Long> countMono = repository.countSearch(likeDesc, userId, accountId);
 
         return Mono.zip(dataMono, countMono)
                 .map(tuple -> PageResponse.of(tuple.getT1(), currentPage, pageSize, tuple.getT2()));
+    }
+
+    /**
+     * 为AccountTransactionDto补充分类名称和账户名称
+     */
+    private Mono<AccountTransactionDto> enrichWithCategoryAndAccountName(AccountTransactionDto dto) {
+        Mono<AccountTransactionDto> categoryMono = dto.getCategoryId() == null 
+            ? Mono.just(dto)
+            : categoryRepository.findById(dto.getCategoryId())
+                .map(cat -> { dto.setCategoryName(cat.getName()); return dto; })
+                .defaultIfEmpty(dto);
+
+        Mono<AccountTransactionDto> accountMono = dto.getAccountId() == null || dto.getUserId() == null
+            ? Mono.just(dto)
+            : assetAccountRepository.findByUserIdAndId(dto.getUserId(), dto.getAccountId())
+                .map(account -> { dto.setAccountName(account.getName()); return dto; })
+                .defaultIfEmpty(dto);
+
+        return categoryMono.flatMap(categoryDto -> 
+            accountMono.map(accountDto -> {
+                // 合并两个DTO的信息
+                if (categoryDto.getCategoryName() != null) {
+                    accountDto.setCategoryName(categoryDto.getCategoryName());
+                }
+                return accountDto;
+            })
+        );
     }
 }

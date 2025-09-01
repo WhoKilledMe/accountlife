@@ -2,8 +2,7 @@ package com.acco.life.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
 
 /**
  * description: 用户数据传输对象，用于在控制器层和服务层之间传递用户信息
@@ -13,11 +12,9 @@ import java.time.LocalDateTime;
  * @version V1.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(name = "UserDto", description = "User 数据传输对象")
-public class UserDto {
-
-    @Schema(name = "id", description = "用户ID", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer id;
+public class UserDto extends BaseColumnDto {
 
     @Schema(name = "username", description = "用户名")
     private String username;
@@ -31,25 +28,9 @@ public class UserDto {
     @Schema(name = "password", description = "明文密码，仅创建或修改时传入", accessMode = Schema.AccessMode.WRITE_ONLY)
     private String password;
 
-    @Schema(name = "createdBy", description = "创建人", accessMode = Schema.AccessMode.READ_ONLY)
-    private String createdBy;
-
-    @Schema(name = "createdAt", description = "创建时间", accessMode = Schema.AccessMode.READ_ONLY)
-    private LocalDateTime createdAt;
-
-    @Schema(name = "updatedBy", description = "修改人", accessMode = Schema.AccessMode.READ_ONLY)
-    private String updatedBy;
-
-    @Schema(name = "updatedAt", description = "修改时间", accessMode = Schema.AccessMode.READ_ONLY)
-    private LocalDateTime updatedAt;
-
-    @Schema(name = "isDeleted", description = "是否删除（0-否，1-是）", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer isDeleted;
-
     @Schema(name = "groupId", description = "用户组Id")
-    private Integer groupId ;
+    private Integer groupId;
 
     @Schema(name = "role", description = "用户组角色")
-    private Integer role ;
-
+    private Integer role;
 }

@@ -30,6 +30,16 @@ public interface AccountTransactionMapper {
 
     AccountTransactionDto toDto(AccountTransaction entity);
 
+    /**
+     * 将AccountTransaction转换为包含账户名称的DTO
+     * 需要额外查询asset_account表获取账户名称
+     */
+    default AccountTransactionDto toDtoWithAccountName(AccountTransaction entity, String accountName) {
+        AccountTransactionDto dto = toDto(entity);
+        dto.setAccountName(accountName);
+        return dto;
+    }
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "userId", source = "userId")
     @Mapping(target = "accountId", source = "accountId")

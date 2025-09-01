@@ -24,6 +24,15 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
      */
     Mono<AssetAccount> findByUserIdAndName(Integer userId, String name);
 
+    /**
+     * 根据用户ID和账户ID查询资产账户
+     * 
+     * @param userId 用户ID
+     * @param id 账户ID
+     * @return 资产账户Mono对象
+     */
+    Mono<AssetAccount> findByUserIdAndId(Integer userId, Integer id);
+
     @Query("""
         SELECT *
         FROM asset_account
