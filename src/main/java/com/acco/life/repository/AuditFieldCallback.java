@@ -36,23 +36,28 @@ public class AuditFieldCallback<T extends BaseColumnEntity> implements BeforeCon
                         entity.setCreatedAt(now);
                         entity.setCreatedBy(String.valueOf(userId));
                         entity.setIsDeleted(0);
+                        // 插入/更新都要
+                        entity.setUpdatedAt(now);
+                        entity.setUpdatedBy(String.valueOf(userId));
+                        return Mono.just(entity);
                     } else {
-                        String className = entity.getClass().getSimpleName() + "Repository";  // e.g. User
+                        String className = entity.getClass().getSimpleName() + "Repository";
                         String lowerCamelName = className.substring(0,1).toLowerCase() + className.substring(1);
-                        ReactiveCrudRepository bean = SpringContextUtil.getBean(lowerCamelName, ReactiveCrudRepository.class);
-                        Mono<T> byId = bean.findById(entity.getId());
-                        T block = byId.block();
-                        if (block != null) {
-                            entity.setCreatedAt(block.getCreatedAt());
-                            entity.setCreatedBy(block.getCreatedBy());
-                            entity.setIsDeleted(block.getIsDeleted());
-                        }
+                        @SuppressWarnings("unchecked")
+                        ReactiveCrudRepository<T, Object> bean = SpringContextUtil.getBean(lowerCamelName, ReactiveCrudRepository.class);
+                        return (bean.findById(entity.getId()))
+                                .defaultIfEmpty(entity)
+                                .map(dbEntity -> {
+                                    if (dbEntity != null && dbEntity.getId() != null) {
+                                        entity.setCreatedAt(dbEntity.getCreatedAt());
+                                        entity.setCreatedBy(dbEntity.getCreatedBy());
+                                        entity.setIsDeleted(dbEntity.getIsDeleted());
+                                    }
+                                    entity.setUpdatedAt(now);
+                                    entity.setUpdatedBy(String.valueOf(userId));
+                                    return entity;
+                                });
                     }
-
-                    // 插入/更新都要
-                    entity.setUpdatedAt(now);
-                    entity.setUpdatedBy(String.valueOf(userId));
-                    return Mono.just(entity);
                 }
         );
 
@@ -66,4 +71,3 @@ public class AuditFieldCallback<T extends BaseColumnEntity> implements BeforeCon
 
 
 }
-

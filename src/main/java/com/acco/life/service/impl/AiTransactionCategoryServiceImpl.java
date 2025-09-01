@@ -42,7 +42,6 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
 
     @Override
     public TransactionType inferTransactionType(String transactionSummary, String amount) {
-        boolean b = transactionSummary.contains("转账") || transactionSummary.contains("转出") || transactionSummary.contains("转入");
         try {
             BigDecimal amountDecimal = new BigDecimal(amount);
             // 正数表示收入，负数表示支出
@@ -52,14 +51,14 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
                 return TransactionType.EXPENSE;
             } else {
                 // 金额为0，根据关键词判断
-                if (b) {
+                if (transactionSummary.contains("转账") || transactionSummary.contains("转出") || transactionSummary.contains("转入")) {
                     return transactionSummary.contains("转入") ? TransactionType.TRANSFER_IN : TransactionType.TRANSFER_OUT;
                 }
                 return TransactionType.EXPENSE; // 默认支出
             }
         } catch (NumberFormatException e) {
             // 金额格式错误，根据关键词判断
-            if (b) {
+            if (transactionSummary.contains("转账") || transactionSummary.contains("转出") || transactionSummary.contains("转入")) {
                 return transactionSummary.contains("转入") ? TransactionType.TRANSFER_IN : TransactionType.TRANSFER_OUT;
             }
             return TransactionType.EXPENSE; // 默认支出
