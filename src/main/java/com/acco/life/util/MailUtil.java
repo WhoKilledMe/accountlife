@@ -37,8 +37,6 @@ public class MailUtil {
             props.setProperty("mail.imap.port", port);
             props.put("mail.imap.ssl.enable", "true"); // 关键，必须是 true
 
-           // props.put("mail.imap.starttls.enable", "true");
-           // props.put("mail.imap.auth", "true");
             Session session = Session.getInstance(props);
             session.setDebug(true); // 打开调试
 

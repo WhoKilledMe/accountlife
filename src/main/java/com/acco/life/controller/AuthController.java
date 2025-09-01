@@ -45,9 +45,8 @@ public class AuthController {
         private String password;
     }
 
-    @Data
-    public static class TokenResp {
-        private final String token;
+
+    public record TokenResp(String token) {
     }
 }
 
