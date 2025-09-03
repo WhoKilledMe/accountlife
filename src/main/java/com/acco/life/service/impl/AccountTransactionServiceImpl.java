@@ -88,7 +88,7 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
      * 为AccountTransactionDto补充分类名称和账户名称
      */
     private Mono<AccountTransactionDto> enrichWithCategoryAndAccountName(AccountTransactionDto dto) {
-        Mono<AccountTransactionDto> categoryMono = dto.getCategoryId() == null 
+        Mono<AccountTransactionDto> categoryMono = dto.getCategoryId() == null
             ? Mono.just(dto)
             : categoryRepository.findById(dto.getCategoryId())
                 .map(cat -> { dto.setCategoryName(cat.getName()); return dto; })
@@ -100,7 +100,7 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
                 .map(account -> { dto.setAccountName(account.getName()); return dto; })
                 .defaultIfEmpty(dto);
 
-        return categoryMono.flatMap(categoryDto -> 
+        return categoryMono.flatMap(categoryDto ->
             accountMono.map(accountDto -> {
                 // 合并两个DTO的信息
                 if (categoryDto.getCategoryName() != null) {
