@@ -31,7 +31,7 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
     private final TransactionCategoryMapper transactionCategoryMapper;
 
     @Override
-    public Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Integer userId) {
+    public Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Long userId) {
         // 推断交易类型和分类类型
         TransactionType transactionType = inferTransactionType(transactionSummary, amount);
         CategoryType categoryType = inferCategoryType(transactionSummary, amount);
@@ -105,7 +105,7 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
     }
 
     @Override
-    public Mono<List<TransactionCategoryDto>> recommendTransactionCategories(String transactionSummary, String amount, Integer userId, int topN) {
+    public Mono<List<TransactionCategoryDto>> recommendTransactionCategories(String transactionSummary, String amount, Long userId, int topN) {
         // 基于当前推断的分类进行推荐
         CategoryType inferredCategory = inferCategoryType(transactionSummary, amount);
         TransactionType transactionType = inferTransactionType(transactionSummary, amount);
@@ -134,7 +134,7 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
     }
 
     @Override
-    public Mono<List<TransactionCategoryDto>> batchInferTransactionCategories(List<TransactionSummary> transactions, Integer userId) {
+    public Mono<List<TransactionCategoryDto>> batchInferTransactionCategories(List<TransactionSummary> transactions, Long userId) {
         List<TransactionCategoryDto> results = new ArrayList<>();
         
         for (TransactionSummary transaction : transactions) {
@@ -154,7 +154,7 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
     /**
      * 查找或创建分类
      */
-    private Mono<TransactionCategoryDto> findOrCreateCategory(CategoryType categoryType, Integer userId) {
+    private Mono<TransactionCategoryDto> findOrCreateCategory(CategoryType categoryType, Long userId) {
         return transactionCategoryRepository.findByTypeAndUserId(categoryType.transactionType.code,categoryType.name, userId)
                 .map(transactionCategoryMapper::toDto)
                 .switchIfEmpty(createNewCategory(categoryType, userId));
@@ -163,7 +163,7 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
     /**
      * 创建新分类
      */
-    private Mono<TransactionCategoryDto> createNewCategory(CategoryType categoryType, Integer userId) {
+    private Mono<TransactionCategoryDto> createNewCategory(CategoryType categoryType, Long userId) {
         TransactionCategory newCategory = new TransactionCategory();
         newCategory.setType(categoryType.transactionType.code);
         newCategory.setName(categoryType.name);

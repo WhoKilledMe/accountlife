@@ -16,9 +16,9 @@ public interface CreditWalletStatementService {
 
      Mono<List<CreditWalletStatementDto>> findAll();
 
-     Mono<CreditWalletStatementDto> findById(Integer id);
+     Mono<CreditWalletStatementDto> findById(Long id);
 
      Mono<CreditWalletStatementDto> save(Mono<CreditWalletStatementDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 }

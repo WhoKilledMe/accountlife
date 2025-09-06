@@ -24,12 +24,12 @@ public class StatisticsDto {
     /**
      * 统计ID
      */
-    private Integer id;
+    private Long id;
     
     /**
      * 用户ID
      */
-    private Integer userId;
+    private Long userId;
     
     /**
      * 统计类型
@@ -64,7 +64,7 @@ public class StatisticsDto {
     /**
      * 分类ID
      */
-    private Integer categoryId;
+    private Long categoryId;
     
     /**
      * 分类名称
@@ -74,7 +74,7 @@ public class StatisticsDto {
     /**
      * 账户ID
      */
-    private Integer accountId;
+    private Long accountId;
     
     /**
      * 账户名称

@@ -23,7 +23,7 @@ public class PlatformTransaction extends BaseColumnEntity {
      * 所属用户
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 平台编码
@@ -41,7 +41,7 @@ public class PlatformTransaction extends BaseColumnEntity {
      * 映射到业务交易ID
      */
     @Column("mapped_transaction_id")
-    private Integer mappedTransactionId;
+    private Long mappedTransactionId;
 
     /**
      * 备注

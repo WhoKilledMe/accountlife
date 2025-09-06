@@ -47,7 +47,7 @@ public abstract class UserUtil {
                 
                 // 调用UserService根据ID查找用户
                 log.debug("正在调用UserService.findById查找用户: {}", userId);
-                return SpringContextUtil.getBean(UserService.class).findById(Integer.parseInt(userId))
+                return SpringContextUtil.getBean(UserService.class).findById(Long.parseLong(userId))
                         .doOnSuccess(user -> log.debug("成功获取到用户信息: {}", user))
                         .doOnError(error -> log.error("获取用户信息时发生错误: {}", error.getMessage()));
             } catch (Exception e) {
@@ -63,12 +63,12 @@ public abstract class UserUtil {
      * 
      * @return 包含userId的Mono对象
      */
-    public static Mono<Integer> getCurrentUserId() {
+    public static Mono<Long> getCurrentUserId() {
         return Mono.deferContextual(ctx -> {
             if (ctx.hasKey("userId")) {
                 String userId = ctx.get("userId");
                 log.debug("直接获取到userId: {}", userId);
-                return Mono.just(Integer.valueOf(userId));
+                return Mono.just(Long.valueOf(userId));
             } else {
                 log.warn("上下文中没有userId键");
                 return Mono.empty();

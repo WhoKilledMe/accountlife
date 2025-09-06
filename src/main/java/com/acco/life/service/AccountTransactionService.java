@@ -17,11 +17,11 @@ public interface AccountTransactionService {
 
      Mono<List<AccountTransactionDto>> findAll();
 
-     Mono<AccountTransactionDto> findById(Integer id);
+     Mono<AccountTransactionDto> findById(Long id);
 
      Mono<AccountTransactionDto> save(Mono<AccountTransactionDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 
      /**
       * 数据库分页+模糊搜索

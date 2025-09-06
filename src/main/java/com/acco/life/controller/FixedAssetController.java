@@ -49,7 +49,7 @@ public class FixedAssetController {
 
     @Operation(summary = "根据 ID 查询 FixedAsset")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<FixedAssetDto>> get(@PathVariable Integer id) {
+    public Mono<ResponseEntity<FixedAssetDto>> get(@PathVariable Long  id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -73,7 +73,7 @@ public class FixedAssetController {
 
     @Operation(summary = "删除 FixedAsset")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable Integer id) {
+    public Mono<Void> delete(@PathVariable Long  id) {
         return service.deleteById(id);
     }
 }

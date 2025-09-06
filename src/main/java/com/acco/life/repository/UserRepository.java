@@ -11,6 +11,6 @@ import reactor.core.publisher.Mono;
  * @author wensen.zhang
  * @version V1.0.0
  */
-public interface UserRepository extends ReactiveCrudRepository<User, Integer> {
+public interface UserRepository extends ReactiveCrudRepository<User, Long> {
     Mono<User> findByUsername(String username);
 }

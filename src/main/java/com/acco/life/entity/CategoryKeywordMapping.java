@@ -20,14 +20,14 @@ import org.springframework.data.relational.core.mapping.Column;
 public class CategoryKeywordMapping extends BaseColumnEntity {
     
     @Column("category_id")
-    private Integer categoryId;
+    private Long categoryId;
     
     private String keyword;
     
     private Integer weight;
     
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
     
     @Column("is_active")
     private Boolean isActive;

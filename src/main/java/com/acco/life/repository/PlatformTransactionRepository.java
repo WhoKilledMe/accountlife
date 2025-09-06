@@ -10,5 +10,5 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
  * @author wensen.zhang
  * @version V1.0.0
  */
-public interface PlatformTransactionRepository extends ReactiveCrudRepository<PlatformTransaction, Integer> {
+public interface PlatformTransactionRepository extends ReactiveCrudRepository<PlatformTransaction, Long> {
 }

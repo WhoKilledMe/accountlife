@@ -19,10 +19,10 @@ import java.time.LocalDateTime;
 public class UserGroupMemberDto extends BaseColumnDto {
 
     @Schema(name = "groupId", description = "所属用户组ID")
-    private Integer groupId;
+    private Long groupId;
 
     @Schema(name = "userId", description = "用户ID")
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "role", description = "角色权限：1-组长(owner)，2-成员(member)")
     private Integer role;

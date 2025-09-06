@@ -16,9 +16,9 @@ public interface FixedAssetService {
 
      Mono<List<FixedAssetDto>> findAll();
 
-     Mono<FixedAssetDto> findById(Integer id);
+     Mono<FixedAssetDto> findById(Long id);
 
      Mono<FixedAssetDto> save(Mono<FixedAssetDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 }

@@ -20,7 +20,7 @@ public interface UserMapper {
     UserDto toDto(User entity, Integer groupId);
 
     @Mapping(source = "id", target = "id")
-    UserDto dtoToDto(UserDto entity,Integer id, Integer groupId, Integer role);
+    UserDto dtoToDto(UserDto entity, Long id, Long groupId, Integer role);
 
     UserDto toDto(User entity);
 

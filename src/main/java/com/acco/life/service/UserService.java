@@ -16,9 +16,9 @@ public interface UserService {
 
      Mono<List<UserDto>> findAll();
 
-     Mono<UserDto> findById(Integer id);
+     Mono<UserDto> findById(Long id);
 
      Mono<UserDto> save(Mono<UserDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 }

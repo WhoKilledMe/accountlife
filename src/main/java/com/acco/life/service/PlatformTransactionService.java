@@ -16,9 +16,9 @@ public interface PlatformTransactionService {
 
      Mono<List<PlatformTransactionDto>> findAll();
 
-     Mono<PlatformTransactionDto> findById(Integer id);
+     Mono<PlatformTransactionDto> findById(Long id);
 
      Mono<PlatformTransactionDto> save(Mono<PlatformTransactionDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 }

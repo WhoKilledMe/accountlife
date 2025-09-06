@@ -49,7 +49,7 @@ public class PlatformTransactionController {
 
     @Operation(summary = "根据 ID 查询 PlatformTransaction")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<PlatformTransactionDto>> get(@PathVariable Integer id) {
+    public Mono<ResponseEntity<PlatformTransactionDto>> get(@PathVariable Long id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -73,7 +73,7 @@ public class PlatformTransactionController {
 
     @Operation(summary = "删除 PlatformTransaction")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable Integer id) {
+    public Mono<Void> delete(@PathVariable Long id) {
         return service.deleteById(id);
     }
 }

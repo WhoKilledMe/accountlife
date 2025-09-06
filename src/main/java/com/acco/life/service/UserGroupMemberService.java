@@ -16,9 +16,9 @@ public interface UserGroupMemberService {
 
      Mono<List<UserGroupMemberDto>> findAll();
 
-     Mono<UserGroupMemberDto> findById(Integer id);
+     Mono<UserGroupMemberDto> findById(Long id);
 
      Mono<UserGroupMemberDto> save(Mono<UserGroupMemberDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 }

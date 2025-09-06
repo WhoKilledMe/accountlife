@@ -26,13 +26,13 @@ public class TransactionCategoryDto extends BaseColumnDto {
     private Integer type;
 
     @Schema(name = "parentId", description = "父分类ID")
-    private Integer parentId;
+    private Long parentId;
 
     @Schema(name = "icon", description = "图标")
     private String icon;
 
     @Schema(name = "userId", description = "所属用户，null 表示系统分类", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "sortOrder", description = "排序值")
     private Integer sortOrder;

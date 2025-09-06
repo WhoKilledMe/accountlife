@@ -21,7 +21,7 @@ public class BaseColumnEntity {
      */
     @Id
     @Column("id")
-    private Integer id;
+    private Long id;
 
     /**
      * 创建人

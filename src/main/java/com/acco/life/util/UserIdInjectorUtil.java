@@ -22,7 +22,7 @@ public class UserIdInjectorUtil {
     public static <T> Mono<T> withUserId(Mono<T> dtoMono) {
         return UserUtil.getCurrentUser()
                 .flatMap(userDto -> {
-                    Integer userId = userDto.getId();
+                    Long userId = userDto.getId();
                     return dtoMono.map(dto -> {
                         try {
                             // 通过反射设置userId
@@ -67,10 +67,11 @@ public class UserIdInjectorUtil {
      * @param <R> 返回结果类型
      * @return 处理结果的Mono流
      */
-    public static <T, R> Mono<R> withUserId(Mono<T> dtoMono, java.util.function.BiFunction<T, Integer, R> function) {
+    public static <T, R> Mono<R> withUserId(Mono<T> dtoMono, java.util.function.BiFunction<T, Long, R> function) {
         return UserUtil.getCurrentUser()
                 .flatMap(userDto -> {
-                    Integer userId = userDto.getId();
+
+                    Long userId = userDto.getId();
                     return dtoMono.map(dto -> function.apply(dto, userId));
                 });
     }

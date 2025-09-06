@@ -1,17 +1,17 @@
 package com.acco.life.service.impl;
 
 import com.acco.life.dto.BudgetDto;
-import com.acco.life.entity.Budget;
 import com.acco.life.mapper.BudgetMapper;
 import com.acco.life.repository.BudgetRepository;
 import com.acco.life.service.BudgetService;
+import com.acco.life.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,14 +23,14 @@ public class BudgetServiceImpl implements BudgetService {
     private final BudgetMapper budgetMapper;
 
     @Override
-    public Mono<List<BudgetDto>> findByUserId(Integer userId) {
+    public Mono<List<BudgetDto>> findByUserId(Long userId) {
         return budgetRepository.findByUserId(userId)
                 .map(budgetMapper::toDto)
                 .collectList();
     }
 
     @Override
-    public Mono<BudgetDto> findById(Integer id) {
+    public Mono<BudgetDto> findById(Long id) {
         return budgetRepository.findById(id)
                 .map(budgetMapper::toDto);
     }
@@ -45,12 +45,12 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long id) {
         return budgetRepository.deleteById(id);
     }
 
     @Override
-    public Mono<List<BudgetDto>> findByUserIdAndMonth(Integer userId, LocalDate month) {
+    public Mono<List<BudgetDto>> findByUserIdAndMonth(Long userId, LocalDate month) {
         LocalDate start = month.withDayOfMonth(1);
         LocalDate end = month.withDayOfMonth(month.lengthOfMonth());
         return budgetRepository.findByUserIdAndStartDateBetween(userId, start, end)
@@ -59,7 +59,7 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     @Override
-    public Mono<List<BudgetDto>> findByUserIdAndYear(Integer userId, int year) {
+    public Mono<List<BudgetDto>> findByUserIdAndYear(Long userId, int year) {
         LocalDate start = LocalDate.of(year, 1, 1);
         LocalDate end = LocalDate.of(year, 12, 31);
         return budgetRepository.findByUserIdAndStartDateBetween(userId, start, end)
@@ -68,7 +68,7 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     @Override
-    public Mono<List<BudgetDto>> findByUserIdAndCategory(Integer userId, Integer categoryId) {
+    public Mono<List<BudgetDto>> findByUserIdAndCategory(Long userId, Long categoryId) {
         return budgetRepository.findByUserIdAndCategoryId(userId, categoryId)
                 .map(budgetMapper::toDto)
                 .collectList();
@@ -76,7 +76,7 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     @Transactional
-    public Mono<BudgetDto> updateUsedAmount(Integer budgetId, BigDecimal usedAmount) {
+    public Mono<BudgetDto> updateUsedAmount(Long budgetId, BigDecimal usedAmount) {
         return budgetRepository.findById(budgetId)
                 .flatMap(budget -> {
                     budget.setUsedAmount(usedAmount);
@@ -86,13 +86,13 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     @Override
-    public Mono<BudgetDto> checkBudgetStatus(Integer budgetId) {
+    public Mono<BudgetDto> checkBudgetStatus(Long budgetId) {
         return budgetRepository.findById(budgetId)
                 .flatMap(budget -> {
                     BigDecimal used = budget.getUsedAmount() == null ? BigDecimal.ZERO : budget.getUsedAmount();
                     BigDecimal total = budget.getAmount() == null ? BigDecimal.ZERO : budget.getAmount();
                     if (total.compareTo(BigDecimal.ZERO) > 0) {
-                        BigDecimal rate = used.divide(total, 4, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal rate = used.divide(total, 4, RoundingMode.HALF_UP);
                         if (rate.compareTo(budget.getAlertThreshold()) >= 0) {
                             budget.setStatus(3); // 超支
                         } else if (used.compareTo(total) >= 0) {
@@ -107,18 +107,41 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     @Override
-    public Mono<List<BudgetDto>> getBudgetAlerts(Integer userId) {
+    public Mono<List<BudgetDto>> getBudgetAlerts(Long userId) {
         return budgetRepository.findByUserId(userId)
                 .filter(budget -> {
                     BigDecimal used = budget.getUsedAmount() == null ? BigDecimal.ZERO : budget.getUsedAmount();
                     BigDecimal total = budget.getAmount() == null ? BigDecimal.ZERO : budget.getAmount();
                     if (total.compareTo(BigDecimal.ZERO) > 0 && budget.getAlertThreshold() != null) {
-                        BigDecimal rate = used.divide(total, 4, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal rate = used.divide(total, 4, RoundingMode.HALF_UP);
                         return rate.compareTo(budget.getAlertThreshold()) >= 0;
                     }
                     return false;
                 })
                 .map(budgetMapper::toDto)
                 .collectList();
+    }
+
+    @Override
+    public Mono<List<BudgetDto>> getCurrentMonthBudgetUsage() {
+        LocalDate now = LocalDate.now();
+        LocalDate start = now.withDayOfMonth(1);
+        LocalDate end = now.withDayOfMonth(now.lengthOfMonth());
+        
+        return UserUtil.getCurrentUserId()
+                .flatMap(userId -> budgetRepository.findByUserIdAndStartDateBetween(userId, start, end)
+                        .map(budgetMapper::toDto)
+                        .collectList());
+    }
+
+    @Override
+    public Mono<List<BudgetDto>> getMonthBudgetUsage(LocalDate month) {
+        LocalDate start = month.withDayOfMonth(1);
+        LocalDate end = month.withDayOfMonth(month.lengthOfMonth());
+        
+        return UserUtil.getCurrentUserId()
+                .flatMap(userId -> budgetRepository.findByUserIdAndStartDateBetween(userId, start, end)
+                        .map(budgetMapper::toDto)
+                        .collectList());
     }
 }

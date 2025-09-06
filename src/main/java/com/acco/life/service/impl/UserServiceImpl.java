@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<UserDto> findById(Integer id) {
+    public Mono<UserDto> findById(Long id) {
         return repository.findById(id)
                 .map(mapper::toDto);
     }
@@ -94,7 +94,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private Mono<UserDto> bindGroupMember(UserDto dto) {
-        Integer groupId = dto.getGroupId();
+        Long groupId = dto.getGroupId();
         if (ObjectUtil.isNull(groupId)) {
             return Mono.just(dto);
         }
@@ -117,7 +117,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long id) {
         return repository.deleteById(id);
     }
 

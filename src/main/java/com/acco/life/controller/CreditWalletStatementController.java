@@ -50,7 +50,7 @@ public class CreditWalletStatementController {
 
     @Operation(summary = "根据 ID 查询 CreditWalletStatement")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<CreditWalletStatementDto>> get(@PathVariable Integer id) {
+    public Mono<ResponseEntity<CreditWalletStatementDto>> get(@PathVariable Long  id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -74,7 +74,7 @@ public class CreditWalletStatementController {
 
     @Operation(summary = "删除 CreditWalletStatement")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable Integer id) {
+    public Mono<Void> delete(@PathVariable Long  id) {
         return service.deleteById(id);
     }
 }

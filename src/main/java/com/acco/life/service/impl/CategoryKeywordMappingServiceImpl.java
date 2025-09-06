@@ -17,7 +17,7 @@ public class CategoryKeywordMappingServiceImpl implements CategoryKeywordMapping
     private final CategoryKeywordMappingRepository repository;
     
     @Override
-    public Mono<Integer> findCategoryIdByKeyword(String keyword, Integer userId) {
+    public Mono<Long> findCategoryIdByKeyword(String keyword, Long userId) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return Mono.empty();
         }
@@ -48,7 +48,7 @@ public class CategoryKeywordMappingServiceImpl implements CategoryKeywordMapping
     }
     
     @Override
-    public Flux<CategoryKeywordMapping> findByCategoryId(Integer categoryId) {
+    public Flux<CategoryKeywordMapping> findByCategoryId(Long categoryId) {
         if (categoryId == null) {
             return Flux.empty();
         }
@@ -56,7 +56,7 @@ public class CategoryKeywordMappingServiceImpl implements CategoryKeywordMapping
     }
     
     @Override
-    public Flux<CategoryKeywordMapping> findByUserId(Integer userId) {
+    public Flux<CategoryKeywordMapping> findByUserId(Long userId) {
         if (userId == null) {
             return Flux.empty();
         }
@@ -94,7 +94,7 @@ public class CategoryKeywordMappingServiceImpl implements CategoryKeywordMapping
     }
     
     @Override
-    public Mono<Void> deleteKeywordMapping(Integer id) {
+    public Mono<Void> deleteKeywordMapping(Long id) {
         if (id == null) {
             return Mono.error(new IllegalArgumentException("ID不能为空"));
         }

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class FixedAssetDto extends BaseColumnDto {
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "name", description = "资产名称")
     private String name;

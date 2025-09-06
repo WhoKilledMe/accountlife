@@ -18,7 +18,7 @@ public interface AiTransactionCategoryService {
     /**
      * 推断交易分类
      */
-    Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Integer userId);
+    Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Long userId);
     
     /**
      * 推断交易类型（基于金额）
@@ -48,12 +48,12 @@ public interface AiTransactionCategoryService {
     /**
      * 推荐交易分类
      */
-    Mono<List<TransactionCategoryDto>> recommendTransactionCategories(String transactionSummary, String amount, Integer userId, int topN);
+    Mono<List<TransactionCategoryDto>> recommendTransactionCategories(String transactionSummary, String amount, Long userId, int topN);
     
     /**
      * 批量推断交易分类
      */
-    Mono<List<TransactionCategoryDto>> batchInferTransactionCategories(List<TransactionSummary> transactions, Integer userId);
+    Mono<List<TransactionCategoryDto>> batchInferTransactionCategories(List<TransactionSummary> transactions, Long userId);
     
     /**
      * 交易摘要内部类

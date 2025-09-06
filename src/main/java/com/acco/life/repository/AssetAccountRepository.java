@@ -13,7 +13,7 @@ import reactor.core.publisher.Flux;
  * @author wensen.zhang
  * @version V1.0.0
  */
-public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAccount, Integer> {
+public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAccount, Long> {
     
     /**
      * 根据用户ID和账户名称查询资产账户
@@ -22,7 +22,7 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
      * @param name 账户名称
      * @return 资产账户Mono对象
      */
-    Mono<AssetAccount> findByUserIdAndName(Integer userId, String name);
+    Mono<AssetAccount> findByUserIdAndName(Long userId, String name);
 
     /**
      * 根据用户ID和账户ID查询资产账户
@@ -31,7 +31,7 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
      * @param id 账户ID
      * @return 资产账户Mono对象
      */
-    Mono<AssetAccount> findByUserIdAndId(Integer userId, Integer id);
+    Mono<AssetAccount> findByUserIdAndId(Long userId, Long id);
 
     @Query("""
         SELECT *
@@ -43,7 +43,7 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
         ORDER BY id DESC
         LIMIT :limit OFFSET :offset
     """)
-    Flux<AssetAccount> search(String name, String platformCode, String accountNumber, Integer userId, long limit, long offset);
+    Flux<AssetAccount> search(String name, String platformCode, String accountNumber, Long userId, long limit, long offset);
 
     @Query("""
         SELECT COUNT(1)
@@ -53,5 +53,5 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
           AND (:accountNumber IS NULL OR account_number LIKE :accountNumber)
           AND (:userId IS NULL OR user_id = :userId)
     """)
-    Mono<Long> countSearch(String name, String platformCode, String accountNumber, Integer userId);
+    Mono<Long> countSearch(String name, String platformCode, String accountNumber, Long userId);
 }

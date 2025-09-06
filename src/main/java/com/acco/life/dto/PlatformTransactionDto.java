@@ -17,7 +17,7 @@ import lombok.EqualsAndHashCode;
 public class PlatformTransactionDto extends BaseColumnDto {
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "platformCode", description = "平台编码")
     private String platformCode;
@@ -26,7 +26,7 @@ public class PlatformTransactionDto extends BaseColumnDto {
     private String rawJson;
 
     @Schema(name = "mappedTransactionId", description = "映射到业务交易ID")
-    private Integer mappedTransactionId;
+    private Long mappedTransactionId;
 
     @Schema(name = "remark", description = "备注")
     private String remark;

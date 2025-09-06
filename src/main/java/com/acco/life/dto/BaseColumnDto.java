@@ -19,7 +19,7 @@ public class BaseColumnDto {
      * 主键ID
      */
     @Schema(name = "id", description = "主键ID", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer id;
+    private Long id;
 
     /**
      * 创建人

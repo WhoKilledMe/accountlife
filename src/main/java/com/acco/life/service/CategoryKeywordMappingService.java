@@ -12,7 +12,7 @@ public interface CategoryKeywordMappingService {
     /**
      * 根据关键词智能匹配分类ID（优先用户自定义，其次系统）
      */
-    Mono<Integer> findCategoryIdByKeyword(String keyword, Integer userId);
+    Mono<Long> findCategoryIdByKeyword(String keyword, Long userId);
     
     /**
      * 根据关键词模糊搜索
@@ -22,12 +22,12 @@ public interface CategoryKeywordMappingService {
     /**
      * 根据分类ID查找关键词
      */
-    Flux<CategoryKeywordMapping> findByCategoryId(Integer categoryId);
+    Flux<CategoryKeywordMapping> findByCategoryId(Long categoryId);
     
     /**
      * 根据用户ID查找自定义关键词
      */
-    Flux<CategoryKeywordMapping> findByUserId(Integer userId);
+    Flux<CategoryKeywordMapping> findByUserId(Long userId);
     
     /**
      * 添加关键词映射
@@ -42,7 +42,7 @@ public interface CategoryKeywordMappingService {
     /**
      * 删除关键词映射
      */
-    Mono<Void> deleteKeywordMapping(Integer id);
+    Mono<Void> deleteKeywordMapping(Long id);
     
     /**
      * 批量添加关键词映射

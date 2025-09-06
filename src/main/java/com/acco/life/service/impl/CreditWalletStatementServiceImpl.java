@@ -34,7 +34,7 @@ public class CreditWalletStatementServiceImpl implements CreditWalletStatementSe
     }
 
     @Override
-    public Mono<CreditWalletStatementDto> findById(Integer id) {
+    public Mono<CreditWalletStatementDto> findById(Long id) {
         return repository.findById(id)
         .map(mapper::toDto);
     }
@@ -48,7 +48,7 @@ public class CreditWalletStatementServiceImpl implements CreditWalletStatementSe
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long id) {
         return repository.deleteById(id);
     }
 }

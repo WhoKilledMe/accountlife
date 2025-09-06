@@ -24,7 +24,7 @@ public class FixedAsset extends BaseColumnEntity {
      * 所属用户
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 资产名称

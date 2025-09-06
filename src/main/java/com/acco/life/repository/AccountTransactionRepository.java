@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
  * @author wensen.zhang
  * @version V1.0.0
  */
-public interface AccountTransactionRepository extends ReactiveCrudRepository<AccountTransaction, Integer> {
+public interface AccountTransactionRepository extends ReactiveCrudRepository<AccountTransaction, Long> {
 
     @Query("""
         SELECT *
@@ -24,7 +24,7 @@ public interface AccountTransactionRepository extends ReactiveCrudRepository<Acc
         ORDER BY id DESC
         LIMIT :limit OFFSET :offset
     """)
-    Flux<AccountTransaction> search(String description, Integer userId, Integer accountId, long limit, long offset);
+    Flux<AccountTransaction> search(String description, Long userId, Long accountId, long limit, long offset);
 
     @Query("""
         SELECT COUNT(1)
@@ -33,5 +33,5 @@ public interface AccountTransactionRepository extends ReactiveCrudRepository<Acc
           AND (:userId IS NULL OR user_id = :userId)
           AND (:accountId IS NULL OR account_id = :accountId)
     """)
-    Mono<Long> countSearch(String description, Integer userId, Integer accountId);
+    Mono<Long> countSearch(String description, Long userId, Long accountId);
 }

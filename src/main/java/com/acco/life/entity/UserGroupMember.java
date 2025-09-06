@@ -23,13 +23,13 @@ public class UserGroupMember extends BaseColumnEntity {
      * 所属用户组ID
      */
     @Column("group_id")
-    private Integer groupId;
+    private Long groupId;
 
     /**
      * 用户ID
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 角色权限：1-组长(owner)，2-成员(member)

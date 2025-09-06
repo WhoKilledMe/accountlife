@@ -35,7 +35,7 @@ public class AssetAccountServiceImpl implements AssetAccountService {
     }
 
     @Override
-    public Mono<AssetAccountDto> findById(Integer id) {
+    public Mono<AssetAccountDto> findById(Long id) {
         return repository.findById(id)
         .map(mapper::toDto);
     }
@@ -49,7 +49,7 @@ public class AssetAccountServiceImpl implements AssetAccountService {
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long  id) {
         return repository.deleteById(id);
     }
 
@@ -66,7 +66,7 @@ public class AssetAccountServiceImpl implements AssetAccountService {
         String likeName = (filter.getName() == null || filter.getName().isEmpty()) ? null : "%" + filter.getName() + "%";
         String likePlatform = (filter.getPlatformCode() == null || filter.getPlatformCode().isEmpty()) ? null : "%" + filter.getPlatformCode() + "%";
         String likeAccount = (filter.getAccountNumber() == null || filter.getAccountNumber().isEmpty()) ? null : "%" + filter.getAccountNumber() + "%";
-        Integer userId = filter.getUserId();
+        Long  userId = filter.getUserId();
 
         Mono<java.util.List<AssetAccountDto>> dataMono = repository.search(likeName, likePlatform, likeAccount, userId, limit, offset)
                 .map(mapper::toDto)

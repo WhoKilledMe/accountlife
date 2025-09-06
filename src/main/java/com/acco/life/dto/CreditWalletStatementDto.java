@@ -20,10 +20,10 @@ import java.time.LocalDateTime;
 public class CreditWalletStatementDto extends BaseColumnDto {
 
     @Schema(name = "accountId", description = "信用钱包账户ID")
-    private Integer accountId;
+    private Long accountId;
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "billingPeriodStart", description = "账单期开始日期")
     private LocalDateTime billingPeriodStart;

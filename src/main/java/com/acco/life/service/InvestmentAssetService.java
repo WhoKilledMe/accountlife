@@ -16,9 +16,9 @@ public interface InvestmentAssetService {
 
      Mono<List<InvestmentAssetDto>> findAll();
 
-     Mono<InvestmentAssetDto> findById(Integer id);
+     Mono<InvestmentAssetDto> findById(Long id);
 
      Mono<InvestmentAssetDto> save(Mono<InvestmentAssetDto> entity);
 
-     Mono<Void> deleteById(Integer id);
+     Mono<Void> deleteById(Long id);
 }

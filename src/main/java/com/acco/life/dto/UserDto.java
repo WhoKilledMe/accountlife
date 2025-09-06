@@ -29,7 +29,7 @@ public class UserDto extends BaseColumnDto {
     private String password;
 
     @Schema(name = "groupId", description = "用户组Id")
-    private Integer groupId;
+    private Long groupId;
 
     @Schema(name = "role", description = "用户组角色")
     private Integer role;

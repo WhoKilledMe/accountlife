@@ -16,35 +16,35 @@ public interface NotificationService {
     /**
      * 发送预算提醒通知
      */
-    Mono<Void> sendBudgetAlert(Integer userId, String message);
+    Mono<Void> sendBudgetAlert(Long userId, String message);
     
     /**
      * 发送交易通知
      */
-    Mono<Void> sendTransactionNotification(Integer userId, String message);
+    Mono<Void> sendTransactionNotification(Long userId, String message);
     
     /**
      * 发送系统通知
      */
-    Mono<Void> sendSystemNotification(Integer userId, String message);
+    Mono<Void> sendSystemNotification(Long userId, String message);
     
     /**
      * 查询用户通知
      */
-    Mono<List<NotificationDto>> findByUserId(Integer userId);
+    Mono<List<NotificationDto>> findByUserId(Long userId);
     
     /**
      * 标记通知为已读
      */
-    Mono<Void> markAsRead(Integer notificationId);
+    Mono<Void> markAsRead(Long notificationId);
     
     /**
      * 删除通知
      */
-    Mono<Void> deleteNotification(Integer notificationId);
+    Mono<Void> deleteNotification(Long notificationId);
     
     /**
      * 获取未读通知数量
      */
-    Mono<Long> getUnreadCount(Integer userId);
+    Mono<Long> getUnreadCount(Long userId);
 } 

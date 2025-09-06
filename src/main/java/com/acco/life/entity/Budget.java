@@ -23,7 +23,7 @@ public class Budget extends BaseColumnEntity {
      * 用户ID
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
     
     /**
      * 预算名称
@@ -34,14 +34,14 @@ public class Budget extends BaseColumnEntity {
     /**
      * 预算类型：1-月度预算，2-年度预算，3-分类预算
      */
-    @Column("type")
+    @Column("period_type")
     private Integer type;
     
     /**
      * 分类ID（分类预算时使用）
      */
     @Column("category_id")
-    private Integer categoryId;
+    private Long categoryId;
     
     /**
      * 预算金额

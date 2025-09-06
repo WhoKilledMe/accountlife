@@ -24,13 +24,13 @@ public class CreditWalletStatement extends BaseColumnEntity {
      * 信用钱包账户ID
      */
     @Column("account_id")
-    private Integer accountId;
+    private Long accountId;
 
     /**
      * 所属用户
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 账单期开始日期

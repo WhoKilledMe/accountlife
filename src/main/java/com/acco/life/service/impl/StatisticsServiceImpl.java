@@ -4,14 +4,8 @@ import com.acco.life.dto.StatisticsDto;
 import com.acco.life.entity.AccountTransaction;
 import com.acco.life.entity.AssetAccount;
 import com.acco.life.entity.FixedAsset;
-import com.acco.life.entity.InvestmentAsset;
 import com.acco.life.mapper.StatisticsMapper;
-import com.acco.life.repository.AccountTransactionRepository;
-import com.acco.life.repository.AssetAccountRepository;
-import com.acco.life.repository.BudgetRepository;
-import com.acco.life.repository.FixedAssetRepository;
-import com.acco.life.repository.InvestmentAssetRepository;
-import com.acco.life.repository.TransactionCategoryRepository;
+import com.acco.life.repository.*;
 import com.acco.life.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +30,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final StatisticsMapper statisticsMapper;
 
     @Override
-    public Mono<StatisticsDto> getUserTotalAssets(Integer userId) {
+    public Mono<StatisticsDto> getUserTotalAssets(Long userId) {
         Mono<BigDecimal> assetSum = assetAccountRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
                 .map(AssetAccount::getBalance)
@@ -60,7 +54,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<StatisticsDto> getMonthlyStatistics(Integer userId, LocalDate month) {
+    public Mono<StatisticsDto> getMonthlyStatistics(Long userId, LocalDate month) {
         LocalDate start = month.withDayOfMonth(1);
         LocalDate end = month.withDayOfMonth(month.lengthOfMonth());
         return transactionRepository.findAll()
@@ -82,7 +76,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<StatisticsDto> getYearlyStatistics(Integer userId, int year) {
+    public Mono<StatisticsDto> getYearlyStatistics(Long userId, int year) {
         LocalDate start = LocalDate.of(year, 1, 1);
         LocalDate end = LocalDate.of(year, 12, 31);
         return transactionRepository.findAll()
@@ -104,16 +98,16 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<List<StatisticsDto>> getCategoryStatistics(Integer userId, LocalDate startDate, LocalDate endDate) {
+    public Mono<List<StatisticsDto>> getCategoryStatistics(Long userId, LocalDate startDate, LocalDate endDate) {
         return transactionRepository.findAll()
                 .filter(t -> t.getUserId().equals(userId)
                         && !t.getTransactionTime().toLocalDate().isBefore(startDate)
                         && !t.getTransactionTime().toLocalDate().isAfter(endDate))
                 .collectList()
                 .map(list -> {
-                    Map<Integer, StatisticsDto> map = new HashMap<>();
+                    Map<Long, StatisticsDto> map = new HashMap<>();
                     for (AccountTransaction t : list) {
-                        int categoryId = t.getCategoryId();
+                        long categoryId = t.getCategoryId();
                         StatisticsDto dto = map.getOrDefault(categoryId, StatisticsDto.builder()
                                 .userId(userId)
                                 .categoryId(categoryId)
@@ -132,7 +126,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<List<StatisticsDto>> getAccountBalanceStatistics(Integer userId) {
+    public Mono<List<StatisticsDto>> getAccountBalanceStatistics(Long userId) {
         return assetAccountRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
                 .map(a -> StatisticsDto.builder()
@@ -146,7 +140,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<List<StatisticsDto>> getInvestmentStatistics(Integer userId) {
+    public Mono<List<StatisticsDto>> getInvestmentStatistics(Long userId) {
         return investmentAssetRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
                 .map(a -> StatisticsDto.builder()
@@ -160,7 +154,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<List<StatisticsDto>> getFixedAssetStatistics(Integer userId) {
+    public Mono<List<StatisticsDto>> getFixedAssetStatistics(Long userId) {
         return fixedAssetRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
                 .map(a -> StatisticsDto.builder()
@@ -174,7 +168,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<Map<String, Object>> getTrendStatistics(Integer userId, LocalDate startDate, LocalDate endDate) {
+    public Mono<Map<String, Object>> getTrendStatistics(Long userId, LocalDate startDate, LocalDate endDate) {
         // 简单实现：返回每日收支趋势
         return transactionRepository.findAll()
                 .filter(t -> t.getUserId().equals(userId)
@@ -200,7 +194,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Mono<StatisticsDto> getBudgetExecution(Integer userId, LocalDate month) {
+    public Mono<StatisticsDto> getBudgetExecution(Long userId, LocalDate month) {
         LocalDate start = month.withDayOfMonth(1);
         LocalDate end = month.withDayOfMonth(month.lengthOfMonth());
         return budgetRepository.findByUserIdAndStartDateBetween(userId, start, end)

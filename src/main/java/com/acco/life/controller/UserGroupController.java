@@ -49,7 +49,7 @@ public class UserGroupController {
 
     @Operation(summary = "根据 ID 查询 UserGroup")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<UserGroupDto>> get(@PathVariable Integer id) {
+    public Mono<ResponseEntity<UserGroupDto>> get(@PathVariable Long id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -73,7 +73,7 @@ public class UserGroupController {
 
     @Operation(summary = "删除 UserGroup")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable Integer id) {
+    public Mono<Void> delete(@PathVariable Long id) {
         return service.deleteById(id);
     }
 }

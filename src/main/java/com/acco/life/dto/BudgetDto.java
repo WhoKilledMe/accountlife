@@ -25,7 +25,7 @@ public class BudgetDto extends BaseColumnDto {
     /**
      * 用户ID
      */
-    private Integer userId;
+    private Long userId;
     
     /**
      * 预算名称
@@ -40,7 +40,7 @@ public class BudgetDto extends BaseColumnDto {
     /**
      * 分类ID（分类预算时使用）
      */
-    private Integer categoryId;
+    private Long categoryId;
     
     /**
      * 分类名称

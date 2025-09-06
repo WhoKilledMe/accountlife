@@ -50,7 +50,7 @@ public class AccountTransactionController {
 
     @Operation(summary = "根据 ID 查询 AccountTransaction")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<AccountTransactionDto>> get(@PathVariable Integer id) {
+    public Mono<ResponseEntity<AccountTransactionDto>> get(@PathVariable Long  id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -74,7 +74,7 @@ public class AccountTransactionController {
 
     @Operation(summary = "删除 AccountTransaction")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable Integer id) {
+    public Mono<Void> delete(@PathVariable Long  id) {
         return service.deleteById(id);
     }
 }

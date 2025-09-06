@@ -33,7 +33,7 @@ public class TransactionCategory extends BaseColumnEntity {
      * 父分类ID
      */
     @Column("parent_id")
-    private Integer parentId;
+    private Long parentId;
 
     /**
      * 图标
@@ -45,7 +45,7 @@ public class TransactionCategory extends BaseColumnEntity {
      * 所属用户，null 表示系统分类
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 排序值

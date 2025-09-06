@@ -21,8 +21,8 @@ public class CategoryKeywordMappingController {
      * 根据关键词智能匹配分类ID（优先用户自定义）
      */
     @GetMapping("/match")
-    public Mono<ApiResponse<Integer>> matchCategoryId(@RequestParam String keyword,
-                                                      @RequestParam(required = false) Integer userId) {
+    public Mono<ApiResponse<Long>> matchCategoryId(@RequestParam String keyword,
+                                                      @RequestParam(required = false) Long userId) {
         return service.findCategoryIdByKeyword(keyword, userId)
                 .map(ApiResponse::success)
                 .switchIfEmpty(Mono.just(ApiResponse.success(null)));
@@ -41,7 +41,7 @@ public class CategoryKeywordMappingController {
      * 根据分类ID查找关键词
      */
     @GetMapping("/by-category-id")
-    public Mono<ApiResponse<Flux<CategoryKeywordMapping>>> findByCategoryId(@RequestParam Integer categoryId) {
+    public Mono<ApiResponse<Flux<CategoryKeywordMapping>>> findByCategoryId(@RequestParam Long categoryId) {
         Flux<CategoryKeywordMapping> results = service.findByCategoryId(categoryId);
         return Mono.just(ApiResponse.success(results));
     }
@@ -50,7 +50,7 @@ public class CategoryKeywordMappingController {
      * 根据用户ID查找自定义关键词
      */
     @GetMapping("/by-user-id")
-    public Mono<ApiResponse<Flux<CategoryKeywordMapping>>> findByUserId(@RequestParam Integer userId) {
+    public Mono<ApiResponse<Flux<CategoryKeywordMapping>>> findByUserId(@RequestParam Long userId) {
         Flux<CategoryKeywordMapping> results = service.findByUserId(userId);
         return Mono.just(ApiResponse.success(results));
     }
@@ -63,7 +63,7 @@ public class CategoryKeywordMappingController {
     }
     
     @PutMapping("/{id}")
-    public Mono<ApiResponse<CategoryKeywordMapping>> updateMapping(@PathVariable Integer id,
+    public Mono<ApiResponse<CategoryKeywordMapping>> updateMapping(@PathVariable Long id,
                                                                    @RequestBody CategoryKeywordMapping mapping) {
         mapping.setId(id);
         return service.updateKeywordMapping(mapping)
@@ -72,7 +72,7 @@ public class CategoryKeywordMappingController {
     }
     
     @DeleteMapping("/{id}")
-    public Mono<ApiResponse<Void>> deleteMapping(@PathVariable Integer id) {
+    public Mono<ApiResponse<Void>> deleteMapping(@PathVariable Long id) {
         return service.deleteKeywordMapping(id)
                 .then(Mono.just(ApiResponse.<Void>success(null)))
                 .onErrorResume(e -> Mono.just(ApiResponse.<Void>error(e.getMessage())));

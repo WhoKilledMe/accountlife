@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class TokenStore {
 
-    private final Map<String, Integer> tokenToUser = new ConcurrentHashMap<>();
+    private final Map<String, Long> tokenToUser = new ConcurrentHashMap<>();
     private final Map<String, Long> tokenExpireAt = new ConcurrentHashMap<>();
     private Duration ttl = Duration.ofHours(12);
 
@@ -17,12 +17,12 @@ public class TokenStore {
         this.ttl = ttl;
     }
 
-    public void store(String token, Integer userId) {
+    public void store(String token, Long userId) {
         tokenToUser.put(token, userId);
         tokenExpireAt.put(token, System.currentTimeMillis() + ttl.toMillis());
     }
 
-    public Integer getUserId(String token) {
+    public Long getUserId(String token) {
         if (token == null) {
             return null;
         }

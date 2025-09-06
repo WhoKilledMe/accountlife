@@ -24,13 +24,13 @@ public class InvestmentAsset extends BaseColumnEntity {
      * 所属用户
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 关联账户
      */
     @Column("account_id")
-    private Integer accountId;
+    private Long accountId;
 
     /**
      * 股票/基金代码

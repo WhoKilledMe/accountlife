@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 public class AssetAccountDto extends BaseColumnDto {
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "name", description = "账户名称（如 招商银行、花呗）")
     private String name;

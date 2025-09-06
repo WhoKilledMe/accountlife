@@ -34,7 +34,7 @@ public class InvestmentAssetServiceImpl implements InvestmentAssetService {
     }
 
     @Override
-    public Mono<InvestmentAssetDto> findById(Integer id) {
+    public Mono<InvestmentAssetDto> findById(Long id) {
         return repository.findById(id)
         .map(mapper::toDto);
     }
@@ -48,7 +48,7 @@ public class InvestmentAssetServiceImpl implements InvestmentAssetService {
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long id) {
         return repository.deleteById(id);
     }
 }

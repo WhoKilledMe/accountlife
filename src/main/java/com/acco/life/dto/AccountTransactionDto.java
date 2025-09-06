@@ -20,10 +20,10 @@ import java.time.LocalDateTime;
 public class AccountTransactionDto extends BaseColumnDto {
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long  userId;
 
     @Schema(name = "accountId", description = "发生账户")
-    private Integer accountId;
+    private Long  accountId;
 
     @Schema(name = "accountName", description = "账户名称（来自asset_account.name）")
     private String accountName;
@@ -35,13 +35,13 @@ public class AccountTransactionDto extends BaseColumnDto {
     private BigDecimal amount;
 
     @Schema(name = "categoryId", description = "分类ID")
-    private Integer categoryId;
+    private Long  categoryId;
 
     @Schema(name = "categoryName", description = "分类名称（来自transaction_category.name）")
     private String categoryName;
 
     @Schema(name = "relatedTransactionId", description = "关联交易ID")
-    private Integer relatedTransactionId;
+    private Long  relatedTransactionId;
 
     @Schema(name = "description", description = "摘要说明")
     private String description;
@@ -56,5 +56,5 @@ public class AccountTransactionDto extends BaseColumnDto {
     private String sourceRef;
 
     @Schema(name = "statementId", description = "账单归属ID")
-    private Integer statementId;
+    private Long  statementId;
 }

@@ -22,12 +22,12 @@ public class NotificationDto {
     /**
      * 通知ID
      */
-    private Integer id;
+    private Long id;
     
     /**
      * 用户ID
      */
-    private Integer userId;
+    private Long userId;
     
     /**
      * 通知类型：1-预算提醒，2-交易通知，3-系统通知

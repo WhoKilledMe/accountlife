@@ -20,10 +20,10 @@ import java.time.LocalDateTime;
 public class InvestmentAssetDto extends BaseColumnDto {
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
-    private Integer userId;
+    private Long userId;
 
     @Schema(name = "accountId", description = "关联账户")
-    private Integer accountId;
+    private Long accountId;
 
     @Schema(name = "code", description = "股票/基金代码")
     private String code;

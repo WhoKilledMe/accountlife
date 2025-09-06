@@ -57,12 +57,12 @@ public interface AccountTransactionMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
-    AccountTransaction toEntity(FileTransactionDto fileTransactionDto, Integer userId, Integer accountId, Integer sourceType);
+    AccountTransaction toEntity(FileTransactionDto fileTransactionDto, Long userId, Long accountId, Integer sourceType);
 
     default List<AccountTransaction> toEntityList(List<? extends FileTransactionDto> dtoList, 
                                                   TransactionSourceType transactionSourceType,
-                                                  Integer userId,
-                                                  Integer accountId) {
+                                                  Long userId,
+                                                  Long accountId) {
         List<AccountTransaction> accountTransactions = new ArrayList<>();
         for (FileTransactionDto dto : dtoList) {
             AccountTransaction transaction = toEntity(dto, userId, accountId, transactionSourceType.code);

@@ -38,13 +38,14 @@ public class TransactionCategoryController {
     }
 
     @Operation(summary = "分页查询 TransactionCategory")
-    @GetMapping("/page")
+    @PostMapping("/page")
     public Mono<ResponseEntity<PageResponse<TransactionCategoryDto>>> page(
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestBody(required = false) TransactionCategoryDto filter
     ) {
-        return service.findAll()
-                .map(list -> PageResponse.fromList(list, page, size))
+        String nameLike = filter == null ? null : filter.getName();
+        return service.page(nameLike, page, size)
                 .map(ResponseEntity::ok)
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
@@ -79,7 +80,7 @@ public class TransactionCategoryController {
 
     @Operation(summary = "根据 ID 查询 TransactionCategory")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<TransactionCategoryDto>> get(@PathVariable Integer id) {
+    public Mono<ResponseEntity<TransactionCategoryDto>> get(@PathVariable Long id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -103,7 +104,7 @@ public class TransactionCategoryController {
 
     @Operation(summary = "删除 TransactionCategory")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable Integer id) {
+    public Mono<Void> delete(@PathVariable Long id) {
         return service.deleteById(id);
     }
 }

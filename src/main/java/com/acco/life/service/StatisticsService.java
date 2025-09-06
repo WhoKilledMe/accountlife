@@ -18,45 +18,45 @@ public interface StatisticsService {
     /**
      * 获取用户总资产统计
      */
-    Mono<StatisticsDto> getUserTotalAssets(Integer userId);
+    Mono<StatisticsDto> getUserTotalAssets(Long userId);
     
     /**
      * 获取月度收支统计
      */
-    Mono<StatisticsDto> getMonthlyStatistics(Integer userId, LocalDate month);
+    Mono<StatisticsDto> getMonthlyStatistics(Long userId, LocalDate month);
     
     /**
      * 获取年度收支统计
      */
-    Mono<StatisticsDto> getYearlyStatistics(Integer userId, int year);
+    Mono<StatisticsDto> getYearlyStatistics(Long userId, int year);
     
     /**
      * 获取分类统计
      */
-    Mono<List<StatisticsDto>> getCategoryStatistics(Integer userId, LocalDate startDate, LocalDate endDate);
+    Mono<List<StatisticsDto>> getCategoryStatistics(Long userId, LocalDate startDate, LocalDate endDate);
     
     /**
      * 获取账户余额统计
      */
-    Mono<List<StatisticsDto>> getAccountBalanceStatistics(Integer userId);
+    Mono<List<StatisticsDto>> getAccountBalanceStatistics(Long userId);
     
     /**
      * 获取投资资产统计
      */
-    Mono<List<StatisticsDto>> getInvestmentStatistics(Integer userId);
+    Mono<List<StatisticsDto>> getInvestmentStatistics(Long userId);
     
     /**
      * 获取固定资产统计
      */
-    Mono<List<StatisticsDto>> getFixedAssetStatistics(Integer userId);
+    Mono<List<StatisticsDto>> getFixedAssetStatistics(Long userId);
     
     /**
      * 获取趋势统计
      */
-    Mono<Map<String, Object>> getTrendStatistics(Integer userId, LocalDate startDate, LocalDate endDate);
+    Mono<Map<String, Object>> getTrendStatistics(Long userId, LocalDate startDate, LocalDate endDate);
     
     /**
      * 获取预算执行情况
      */
-    Mono<StatisticsDto> getBudgetExecution(Integer userId, LocalDate month);
+    Mono<StatisticsDto> getBudgetExecution(Long userId, LocalDate month);
 } 

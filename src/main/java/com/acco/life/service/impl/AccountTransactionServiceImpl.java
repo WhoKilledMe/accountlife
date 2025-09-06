@@ -29,34 +29,34 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
     private final TransactionCategoryRepository categoryRepository;
     private final AssetAccountRepository assetAccountRepository;
 
-    private final AccountTransactionMapper mapper;
+    private final AccountTransactionMapper accountTransactionMapper;
 
 
     @Override
     public Mono<List<AccountTransactionDto>> findAll() {
         return repository.findAll()
-                .map(mapper::toDto)
-                .flatMap(dto -> enrichWithCategoryAndAccountName(dto))
+                .map(accountTransactionMapper::toDto)
+                .flatMap(this::enrichWithCategoryAndAccountName)
                 .collectList();
     }
 
     @Override
-    public Mono<AccountTransactionDto> findById(Integer id) {
+    public Mono<AccountTransactionDto> findById(Long  id) {
         return repository.findById(id)
-        .map(mapper::toDto)
+        .map(accountTransactionMapper::toDto)
         .flatMap(dto -> enrichWithCategoryAndAccountName(dto));
     }
 
     @Override
     public Mono<AccountTransactionDto> save(Mono<AccountTransactionDto> dto) {
 
-        return dto.map(mapper::toEntity)
+        return dto.map(accountTransactionMapper::toEntity)
             .flatMap(repository::save)
-            .map(mapper::toDto);
+            .map(accountTransactionMapper::toDto);
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long  id) {
         return repository.deleteById(id);
     }
 
@@ -70,11 +70,11 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
         long offset = (long) currentPage * pageSize;
 
         String likeDesc = (filter.getDescription() == null || filter.getDescription().isEmpty()) ? null : "%" + filter.getDescription() + "%";
-        Integer userId = filter.getUserId();
-        Integer accountId = filter.getAccountId();
+        Long  userId = filter.getUserId();
+        Long  accountId = filter.getAccountId();
 
         Mono<List<AccountTransactionDto>> dataMono = repository.search(likeDesc, userId, accountId, pageSize, offset)
-                .map(mapper::toDto)
+                .map(accountTransactionMapper::toDto)
                 .flatMap(dto -> enrichWithCategoryAndAccountName(dto))
                 .collectList();
 

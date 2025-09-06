@@ -23,7 +23,7 @@ public class AssetAccount extends BaseColumnEntity {
      * 所属用户
      */
     @Column("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 账户名称（如 招商银行、花呗）

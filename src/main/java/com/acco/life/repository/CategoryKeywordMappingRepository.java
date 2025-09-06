@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
  * 分类关键词映射Repository
  */
 @Repository
-public interface CategoryKeywordMappingRepository extends ReactiveCrudRepository<CategoryKeywordMapping, Integer> {
+public interface CategoryKeywordMappingRepository extends ReactiveCrudRepository<CategoryKeywordMapping, Long> {
     
     /**
      * 根据关键词模糊搜索（支持分词）
@@ -36,7 +36,7 @@ public interface CategoryKeywordMappingRepository extends ReactiveCrudRepository
         AND is_active = true 
         ORDER BY weight DESC, keyword ASC
         """)
-    Flux<CategoryKeywordMapping> findByCategoryId(Integer categoryId);
+    Flux<CategoryKeywordMapping> findByCategoryId(Long categoryId);
     
     /**
      * 根据用户ID查找自定义关键词
@@ -47,7 +47,7 @@ public interface CategoryKeywordMappingRepository extends ReactiveCrudRepository
         AND is_active = true 
         ORDER BY weight DESC, keyword ASC
         """)
-    Flux<CategoryKeywordMapping> findByUserId(Integer userId);
+    Flux<CategoryKeywordMapping> findByUserId(Long userId);
     
     /**
      * 根据关键词精确匹配
@@ -72,7 +72,7 @@ public interface CategoryKeywordMappingRepository extends ReactiveCrudRepository
         ORDER BY weight DESC
         LIMIT 1
         """)
-    Mono<CategoryKeywordMapping> findByKeywordAndCategoryId(String keyword, Integer categoryId);
+    Mono<CategoryKeywordMapping> findByKeywordAndCategoryId(String keyword, Long categoryId);
     
     /**
      * 获取所有启用的关键词

@@ -105,7 +105,7 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
     /**
      * 处理单个交易DTO，转换为AccountTransaction实体
      */
-    private Mono<AccountTransaction> processTransactionDto(FileTransactionDto dto, Integer accountId, TransactionSourceType transactionSourceType) {
+    private Mono<AccountTransaction> processTransactionDto(FileTransactionDto dto, Long  accountId, TransactionSourceType transactionSourceType) {
         return UserUtil.getCurrentUserId()
                 .flatMap(userId -> {
                     if (dto instanceof FileTransactionNingBoBank) {
@@ -122,7 +122,7 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
     /**
      * 处理宁波银行交易记录
      */
-    private Mono<AccountTransaction> processNingBoBankTransaction(FileTransactionNingBoBank ningbo, Integer userId, Integer accountId, TransactionSourceType transactionSourceType) {
+    private Mono<AccountTransaction> processNingBoBankTransaction(FileTransactionNingBoBank ningbo, Long userId, Long  accountId, TransactionSourceType transactionSourceType) {
         return aiTransactionCategoryService
                 .inferTransactionCategory(ningbo.getTransactionSummary(), ningbo.getTransactionAmount(), userId)
                 .flatMap(category -> {
@@ -145,7 +145,7 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
     /**
      * 处理标签详情交易记录
      */
-    private Mono<AccountTransaction> processLabelDetailTransaction(FileTransactionLabelDetail labelDetail, Integer userId, Integer accountId, TransactionSourceType transactionSourceType) {
+    private Mono<AccountTransaction> processLabelDetailTransaction(FileTransactionLabelDetail labelDetail, Long  userId, Long  accountId, TransactionSourceType transactionSourceType) {
         return aiTransactionCategoryService
                 .inferTransactionCategory(labelDetail.getTransactionSummary(), labelDetail.getTransactionAmount(), userId)
                 .flatMap(category -> {

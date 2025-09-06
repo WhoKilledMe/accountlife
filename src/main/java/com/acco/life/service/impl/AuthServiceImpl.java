@@ -40,7 +40,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Mono<Integer> getUserIdByToken(String token) {
+    public Mono<Long> getUserIdByToken(String token) {
         return Mono.justOrEmpty(tokenStore.getUserId(token));
     }
 }

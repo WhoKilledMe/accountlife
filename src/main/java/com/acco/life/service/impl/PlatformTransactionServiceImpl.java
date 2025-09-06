@@ -34,7 +34,7 @@ public class PlatformTransactionServiceImpl implements PlatformTransactionServic
     }
 
     @Override
-    public Mono<PlatformTransactionDto> findById(Integer id) {
+    public Mono<PlatformTransactionDto> findById(Long id) {
         return repository.findById(id)
         .map(mapper::toDto);
     }
@@ -48,7 +48,7 @@ public class PlatformTransactionServiceImpl implements PlatformTransactionServic
     }
 
     @Override
-    public Mono<Void> deleteById(Integer id) {
+    public Mono<Void> deleteById(Long id) {
         return repository.deleteById(id);
     }
 }
