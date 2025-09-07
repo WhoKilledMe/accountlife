@@ -17,6 +17,12 @@ import org.springframework.data.relational.core.mapping.Table;
 public class MailConfig extends BaseColumnEntity {
 
     /**
+     * 用户ID（关联用户表）
+     */
+    @Column("user_id")
+    private Long userId;
+
+    /**
      * 配置名称
      */
     @Column("name")
@@ -33,12 +39,6 @@ public class MailConfig extends BaseColumnEntity {
      */
     @Column("port")
     private Integer port;
-
-    /**
-     * 用户ID（关联用户表）
-     */
-    @Column("user_id")
-    private Integer userId;
 
     /**
      * 邮箱账号
