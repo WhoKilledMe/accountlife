@@ -108,10 +108,10 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
     private Mono<AccountTransaction> processTransactionDto(FileTransactionDto dto, Long  accountId, TransactionSourceType transactionSourceType) {
         return UserUtil.getCurrentUserId()
                 .flatMap(userId -> {
-                    if (dto instanceof FileTransactionNingBoBank) {
-                        return processNingBoBankTransaction((FileTransactionNingBoBank) dto, userId, accountId, transactionSourceType);
-                    } else if (dto instanceof FileTransactionLabelDetail) {
-                        return processLabelDetailTransaction((FileTransactionLabelDetail) dto, userId, accountId, transactionSourceType);
+                    if (dto instanceof FileTransactionNingBoBank ningBoBank) {
+                        return processNingBoBankTransaction(ningBoBank, userId, accountId, transactionSourceType);
+                    } else if (dto instanceof FileTransactionLabelDetail labelDetail) {
+                        return processLabelDetailTransaction(labelDetail, userId, accountId, transactionSourceType);
                     } else {
                         log.warn("未知的交易DTO类型: {}", dto.getClass().getSimpleName());
                         return Mono.error(new IllegalArgumentException("不支持的交易DTO类型: " + dto.getClass().getSimpleName()));
