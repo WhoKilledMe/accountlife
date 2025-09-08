@@ -1,7 +1,10 @@
 package com.acco.life.util;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import jakarta.mail.*;
 import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.internet.MimeUtility;
+import jakarta.mail.search.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,62 +13,123 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Properties;
 
 /**
  * description: 邮箱工具类，用于获取收件箱中标题包含“宁波银行”的邮件内容，并提取正文中的URL进行GET请求获取返回结果
  *
- * @date: 2025-07-25 15:30:00
  * @author wensen.zhang
  * @version V1.0.0
+ * @date: 2025-07-25 15:30:00
  */
 public class MailUtil {
+
     /**
-     * 获取邮箱中标题包含“宁波银行”的邮件正文，并提取正文中的URL进行GET请求获取返回内容
-     * @param host 邮箱服务器地址（如imap.163.com）
-     * @param port 端口（如993）
-     * @param username 邮箱账号
-     * @param password 邮箱密码或授权码
-     * @return 匹配邮件正文和URL请求结果
+     * 基于发件人与日期（单日或范围）搜索并下载附件到指定目录
      */
-    public static String fetchNingboBankMailAndUrlContent(String host, String port, String username, String password) {
+    public static String searchAndDownloadAttachmentsBySender(
+            String host,
+            String port,
+            String username,
+            String password,
+            String senderContains,
+            String startDate,
+            String endDate,
+            String destDirectory
+    ) {
         StringBuilder result = new StringBuilder();
         try {
             Properties props = new Properties();
-            props.setProperty("mail.store.protocol", "imap");
-            props.setProperty("mail.imap.host", host);
-            props.setProperty("mail.imap.port", port);
-            props.put("mail.imap.ssl.enable", "true"); // 关键，必须是 true
+            props.setProperty("mail.store.protocol", "imaps");
+            props.setProperty("mail.imaps.host", host);
+            if (port != null) props.setProperty("mail.imaps.port", port);
+            props.put("mail.imaps.ssl.enable", "true");
+            props.put("mail.imaps.ssl.trust", "*");
 
             Session session = Session.getInstance(props);
-            session.setDebug(true); // 打开调试
-
-            Store store = session.getStore("imap");
+            Store store = session.getStore("imaps");
             store.connect(username, password);
             Folder inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_ONLY);
 
-            inbox.open(Folder.READ_ONLY); // 只读模式打开收件箱。
-            Message[] messages = inbox.getMessages();
-            boolean found = false;
-            for (int i = messages.length - 1; i >= 0 && !found; i--) { // 倒序查找最新邮件
-                String subject = messages[i].getSubject();
-                if (subject != null && subject.contains("宁波银行")) {
-                    String content = getTextFromMessage(messages[i]);
-                   // result.append("标题: ").append(subject).append("\n");
-                    //result.append("内容: ").append(content).append("\n");
-                    // 查找正文中的URL
-                    String url = extractBillLink(content);
-                    String urlContent = getUrlContent(url);
+            LocalDate start = parseLocalDateOrNull(startDate);
+            LocalDate end = parseLocalDateOrNull(endDate);
+            if (end != null) {
+                end = end.plusDays(1);
+            }
 
-                    found = true; // 只取最新一封
+            SearchTerm term = null;
+            if (start != null) {
+                Date sd = Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                SearchTerm dateTerm = new OrTerm(new SentDateTerm(ComparisonTerm.GE, sd), new ReceivedDateTerm(ComparisonTerm.GE, sd));
+                term =  new AndTerm(term, dateTerm);
+            }
+            if (end != null) {
+                Date ed = Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                SearchTerm dateTerm = new OrTerm(new SentDateTerm(ComparisonTerm.LE, ed), new ReceivedDateTerm(ComparisonTerm.LE, ed));
+                term = term == null ? dateTerm : new AndTerm(term, dateTerm);
+            }
+            if (CharSequenceUtil.isNotBlank(senderContains)) {
+                SearchTerm fromTerm = new FromStringTerm(senderContains);
+                term = term == null ? fromTerm : new AndTerm(term, fromTerm);
+            }
+
+            Message[] messages = term == null ? inbox.getMessages() : inbox.search(term);
+
+            int downloaded = 0;
+            Path destDir = Path.of(destDirectory);
+            if (!Files.exists(destDir)) {
+                Files.createDirectories(destDir);
+            }
+            if (messages != null) {
+                for (Message m : messages) {
+                    downloaded += saveAttachments(m, destDir);
                 }
             }
+            result.append("下载附件数量: ").append(downloaded);
             inbox.close(false);
             store.close();
         } catch (Exception e) {
-            result.append("发生异常: ").append(e.getMessage());
+            return "发生异常: " + e.getMessage();
         }
         return result.toString();
+    }
+
+    private static int saveAttachments(Message message, Path destDir) throws Exception {
+        int count = 0;
+        if (message.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) message.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                BodyPart bodyPart = multipart.getBodyPart(i);
+                String disp = bodyPart.getDisposition();
+                String filename = bodyPart.getFileName();
+                boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(disp) || (filename != null && !filename.isEmpty());
+                if (isAttachment) {
+                    String safeName = MimeUtility.decodeText(filename != null ? filename : ("attachment-" + i));
+                    Path target = destDir.resolve(safeName);
+                    try (var in = bodyPart.getInputStream()) {
+                        Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    private static LocalDate parseLocalDateOrNull(String s) {
+        try {
+            if (s == null || s.isEmpty()) return null;
+            return LocalDate.parse(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // 提取邮件正文内容
@@ -78,6 +142,7 @@ public class MailUtil {
         }
         return "";
     }
+
     // 使用 jsoup 抽取目标链接
     private static String extractBillLink(String htmlContent) {
         Document doc = Jsoup.parse(htmlContent);
@@ -89,6 +154,7 @@ public class MailUtil {
         }
         return null;
     }
+
     private static String getTextFromMimeMultipart(MimeMultipart mimeMultipart) throws Exception {
         StringBuilder result = new StringBuilder();
         int count = mimeMultipart.getCount();
