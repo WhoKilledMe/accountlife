@@ -72,4 +72,10 @@ public class AssetAccount extends BaseColumnEntity {
      */
     @Column("currency")
     private String currency;
+
+    /**
+     * 账单邮箱地址
+     */
+    @Column("bill_email")
+    private String billEmail;
 }

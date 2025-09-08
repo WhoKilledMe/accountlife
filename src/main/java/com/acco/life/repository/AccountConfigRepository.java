@@ -4,6 +4,7 @@ import com.acco.life.entity.AccountConfig;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * 账户配置仓库接口
@@ -43,4 +44,34 @@ public interface AccountConfigRepository extends ReactiveCrudRepository<AccountC
         ORDER BY type ASC, sort_order ASC, id ASC
     """)
     Flux<AccountConfig> findActiveByNameLikeOrderByTypeAndSortOrder(String nameLike);
+
+    /**
+     * 分页搜索系统账户配置
+     */
+    @Query("""
+        SELECT *
+        FROM account_config
+        WHERE is_deleted = 0
+          AND (:nameLike IS NULL OR name LIKE :nameLike)
+          AND (:type IS NULL OR type = :type)
+          AND (:platformLike IS NULL OR platform_code LIKE :platformLike)
+          AND (:active IS NULL OR is_active = :active)
+        ORDER BY type ASC, sort_order ASC, id DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    Flux<AccountConfig> search(String nameLike, Integer type, String platformLike, Boolean active, long limit, long offset);
+
+    /**
+     * 统计分页搜索总数
+     */
+    @Query("""
+        SELECT COUNT(1)
+        FROM account_config
+        WHERE is_deleted = 0
+          AND (:nameLike IS NULL OR name LIKE :nameLike)
+          AND (:type IS NULL OR type = :type)
+          AND (:platformLike IS NULL OR platform_code LIKE :platformLike)
+          AND (:active IS NULL OR is_active = :active)
+    """)
+    Mono<Long> countSearch(String nameLike, Integer type, String platformLike, Boolean active);
 }

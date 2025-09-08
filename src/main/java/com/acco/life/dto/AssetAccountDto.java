@@ -41,4 +41,7 @@ public class AssetAccountDto extends BaseColumnDto {
 
     @Schema(name = "currency", description = "币种")
     private String currency;
+
+    @Schema(name = "billEmail", description = "账单邮箱地址")
+    private String billEmail;
 }

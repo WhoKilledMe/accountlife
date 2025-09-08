@@ -1,6 +1,7 @@
 package com.acco.life.controller;
 
 import com.acco.life.dto.AccountConfigDto;
+import com.acco.life.common.PageResponse;
 import com.acco.life.service.AccountConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,5 +50,47 @@ public class AccountConfigController {
                 .collectList()
                 .map(ResponseEntity::ok)
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "分页查询系统账户配置（支持名称、类型、平台代码、是否启用筛选）")
+    @PostMapping("/page")
+    public Mono<ResponseEntity<PageResponse<AccountConfigDto>>> page(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestBody(required = false) AccountConfigDto filter
+    ) {
+        return service.page(filter, page, size)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "根据ID查询系统账户配置")
+    @GetMapping("/{id}")
+    public Mono<ResponseEntity<AccountConfigDto>> get(@PathVariable Long id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "创建系统账户配置")
+    @PostMapping
+    public Mono<ResponseEntity<AccountConfigDto>> create(@RequestBody Mono<AccountConfigDto> dto) {
+        return service.save(dto)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "更新系统账户配置")
+    @PutMapping
+    public Mono<ResponseEntity<AccountConfigDto>> update(@RequestBody Mono<AccountConfigDto> dto) {
+        return service.save(dto)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    @Operation(summary = "删除系统账户配置（软删除）")
+    @DeleteMapping("/{id}")
+    public Mono<Void> delete(@PathVariable Long id) {
+        return service.deleteById(id);
     }
 }

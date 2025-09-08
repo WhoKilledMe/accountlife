@@ -63,4 +63,10 @@ public class AccountConfig extends BaseColumnEntity {
      */
     @Column("is_active")
     private Boolean isActive;
+
+    /**
+     * 账单邮箱地址
+     */
+    @Column("bill_email")
+    private String billEmail;
 }
