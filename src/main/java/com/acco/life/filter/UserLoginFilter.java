@@ -80,16 +80,34 @@ public class UserLoginFilter implements WebFilter {
                                         Charset charset = resolveCharset(exchange.getRequest().getHeaders());
                                         String bodyStr = new String(bytes, charset);
 
-                                        ObjectNode root;
+                                        JsonNode parsed;
                                         if (bodyStr.isEmpty()) {
-                                            root = objectMapper.createObjectNode();
+                                            parsed = objectMapper.createObjectNode();
                                         } else {
-                                            JsonNode parsed = objectMapper.readTree(bodyStr);
-                                            root = parsed.isObject() ? (ObjectNode) parsed : objectMapper.createObjectNode();
+                                            parsed = objectMapper.readTree(bodyStr);
                                         }
-                                        root.put("userId", String.valueOf(uid));
 
-                                        byte[] newBody = objectMapper.writeValueAsBytes(root);
+                                        JsonNode mutatedNode;
+                                        if (parsed.isArray()) {
+                                            // 入参为集合：为数组中每个对象元素追加 userId
+                                            for (JsonNode node : parsed) {
+                                                if (node.isObject()) {
+                                                    ((ObjectNode) node).put("userId", String.valueOf(uid));
+                                                }
+                                            }
+                                            mutatedNode = parsed;
+                                        } else if (parsed.isObject()) {
+                                            ((ObjectNode) parsed).put("userId", String.valueOf(uid));
+                                            mutatedNode = parsed;
+                                        } else {
+                                            // 非对象/数组，包装为对象
+                                            ObjectNode obj = objectMapper.createObjectNode();
+                                            obj.set("value", parsed);
+                                            obj.put("userId", String.valueOf(uid));
+                                            mutatedNode = obj;
+                                        }
+
+                                        byte[] newBody = objectMapper.writeValueAsBytes(mutatedNode);
                                         DataBufferFactory factory = exchange.getResponse().bufferFactory();
                                         DataBuffer newBuffer = factory.wrap(newBody);
 

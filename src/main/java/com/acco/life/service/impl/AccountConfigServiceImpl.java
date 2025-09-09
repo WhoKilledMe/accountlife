@@ -12,6 +12,8 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import com.acco.life.common.PageResponse;
 import com.acco.life.entity.AccountConfig;
+import com.acco.life.repository.AssetAccountRepository;
+import com.acco.life.util.UserUtil;
 
 /**
  * 账户配置服务实现类
@@ -25,6 +27,7 @@ public class AccountConfigServiceImpl implements AccountConfigService {
     
     private final AccountConfigRepository repository;
     private final AccountConfigMapper mapper;
+    private final AssetAccountRepository assetAccountRepository;
     
     @Override
     public Flux<AccountConfigDto> findAllActive() {
@@ -64,7 +67,19 @@ public class AccountConfigServiceImpl implements AccountConfigService {
 
         Mono<List<AccountConfigDto>> dataMono = repository.search(likeName, type, likePlatform, active, limit, offset)
                 .map(mapper::toDto)
-                .collectList();
+                .collectList()
+                .flatMap(list -> UserUtil.getCurrentUserId()
+                        .flatMap(uid -> assetAccountRepository.findAll()
+                                .filter(a -> a.getUserId() != null && a.getPlatformCode() != null && a.getUserId().equals(uid))
+                                .map(a -> a.getPlatformCode())
+                                .collectList()
+                                .map(userCodes -> {
+                                    list.forEach(dto -> dto.setIsUsed(userCodes.contains(dto.getPlatformCode())));
+                                    return list;
+                                })
+                        )
+                        .defaultIfEmpty(list)
+                );
         Mono<Long> countMono = repository.countSearch(likeName, type, likePlatform, active);
         return Mono.zip(dataMono, countMono)
                 .map(tuple -> PageResponse.of(tuple.getT1(), currentPage, pageSize, tuple.getT2()));

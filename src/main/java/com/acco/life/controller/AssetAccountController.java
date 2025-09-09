@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,6 +82,17 @@ public class AssetAccountController {
     @DeleteMapping("/{id}")
     public Mono<Void> delete(@PathVariable Long  id) {
         return service.deleteById(id);
+    }
+
+    @Operation(summary = "批量创建 AssetAccount")
+    @PostMapping("/batch")
+    public Mono<ResponseEntity<List<AssetAccountDto>>> createBatch(@RequestBody List<AssetAccountDto> dtos) {
+        return Flux.fromIterable(dtos)
+                .flatMap(d -> UserIdInjectorUtil.withUserId(Mono.just(d))
+                        .flatMap(dd -> service.save(Mono.just(dd))))
+                .collectList()
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @Operation(summary = "下拉选择-分页查询 AssetAccount（支持名称模糊查询）")

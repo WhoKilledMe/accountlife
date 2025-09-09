@@ -41,4 +41,7 @@ public class AccountConfigDto extends BaseColumnDto {
 
     @Schema(name = "billEmail", description = "账单邮箱地址")
     private String billEmail;
+
+    @Schema(name = "isUsed", description = "当前用户是否已使用（根据 platformCode 判断）")
+    private Boolean isUsed;
 }
