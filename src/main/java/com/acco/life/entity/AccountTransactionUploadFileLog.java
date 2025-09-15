@@ -50,6 +50,12 @@ public class AccountTransactionUploadFileLog extends BaseColumnEntity {
     private Integer zipPassword;
 
     /**
+     * 上传类型：1-文件上传；2-邮箱附件同步
+     */
+    @Column("upload_type")
+    private Integer uploadType;
+
+    /**
      * 交易开始日期
      */
     @Column("transaction_start_date")

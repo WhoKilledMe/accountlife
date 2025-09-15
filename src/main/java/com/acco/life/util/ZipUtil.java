@@ -55,7 +55,7 @@ public class ZipUtil {
         return digits;
     }
 
-    public static void unzipWithPassword(File zipFilePath, File destinationDir, String password) throws java.io.IOException {
+    public static java.util.List<String> unzipWithPassword(File zipFilePath, File destinationDir, String password) throws java.io.IOException {
         if (zipFilePath == null || !zipFilePath.exists()) {
             throw new IllegalArgumentException("zipFilePath must exist");
         }
@@ -75,7 +75,18 @@ public class ZipUtil {
                 zipFile.setPassword(password.toCharArray());
             }
             try {
+                java.util.List<net.lingala.zip4j.model.FileHeader> headers = zipFile.getFileHeaders();
                 zipFile.extractAll(destinationDir.getAbsolutePath());
+                java.util.List<String> extractedPaths = new java.util.ArrayList<>();
+                for (net.lingala.zip4j.model.FileHeader header : headers) {
+                    // Skip directories
+                    if (header.isDirectory()) {
+                        continue;
+                    }
+                    java.io.File out = new java.io.File(destinationDir, header.getFileName());
+                    extractedPaths.add(out.getAbsolutePath());
+                }
+                return extractedPaths;
             } catch (net.lingala.zip4j.exception.ZipException e) {
                 throw new java.io.IOException("Failed to extract zip: " + e.getMessage(), e);
             }

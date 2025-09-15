@@ -12,10 +12,8 @@ import com.acco.life.repository.AccountTransactionRepository;
 import com.acco.life.repository.AssetAccountRepository;
 import com.acco.life.service.AiTransactionCategoryService;
 import com.acco.life.service.TransactionCsvParseService;
+import com.acco.life.service.csv.CsvParserStrategy;
 import com.acco.life.util.UserUtil;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,12 +35,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class TransactionCsvParseServiceImpl implements TransactionCsvParseService {
-    private final CsvMapper csvMapper = new CsvMapper();
-
     private final AccountTransactionMapper mapper;
     private final AccountTransactionRepository transactionRepository;
     private final AssetAccountRepository accountRepository;
     private final AiTransactionCategoryService aiTransactionCategoryService;
+    private final java.util.List<CsvParserStrategy> parsers;
 
     @Override
     public Mono<Void> parseCsvFile(InputStream inputStream, TransactionSourceType transactionSourceType, String accountName) {
@@ -65,11 +61,16 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
                     log.debug("找到账户ID: {}", accountId);
                     
                     try {
-                        CsvSchema schema = csvMapper.schemaFor(targetType).withHeader();
-                        MappingIterator<? extends FileTransactionDto> it = csvMapper.readerFor(targetType)
-                                .with(schema)
-                                .readValues(inputStream);
-                        List<? extends FileTransactionDto> fileTransactionDtos = it.readAll();
+                        CsvParserStrategy parser = parsers.stream()
+                                .filter(p -> p.supports(transactionSourceType))
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException("未找到匹配的CSV解析器: " + transactionSourceType));
+                        List<? extends FileTransactionDto> fileTransactionDtos;
+                        try {
+                            fileTransactionDtos = parser.parse(inputStream);
+                        } catch (Exception ex) {
+                            throw new IOException("CSV解析失败: " + ex.getMessage(), ex);
+                        }
                         
                         if (fileTransactionDtos.isEmpty()) {
                             log.warn("CSV文件中没有找到任何交易记录");
@@ -78,13 +79,9 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
                         
                         log.info("CSV文件解析完成，共找到 {} 条交易记录", fileTransactionDtos.size());
                         
-                        // 转换为AccountTransaction实体列表，并集成AI分类
-                        List<Mono<AccountTransaction>> transactionMonos = new ArrayList<>();
-                        
-                        for (FileTransactionDto dto : fileTransactionDtos) {
-                            Mono<AccountTransaction> transactionMono = processTransactionDto(dto, accountId, transactionSourceType);
-                            transactionMonos.add(transactionMono);
-                        }
+                        // 策略内完成 DTO->实体 的构建（包含AI分类）
+                        List<Mono<AccountTransaction>> transactionMonos =
+                                parser.buildTransactions(fileTransactionDtos, UserUtil.getCurrentUserId().block(), accountId, transactionSourceType, mapper, aiTransactionCategoryService);
                         
                         // 并行处理所有交易记录
                         return Flux.fromIterable(transactionMonos)
@@ -164,4 +161,6 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
                     return Mono.just(transaction);
                 }));
     }
+
+    
 }

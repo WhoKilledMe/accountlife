@@ -1,7 +1,11 @@
 package com.acco.life.controller;
 
+import com.acco.life.dto.AccountTransactionUploadFileLogDto;
 import com.acco.life.dto.MailSyncRequestDto;
+import com.acco.life.dto.MailSearchConfigDto;
 import com.acco.life.dto.UserMailConfigDto;
+import com.acco.life.enums.UploadLogStatus;
+import com.acco.life.service.AccountTransactionUploadFileLogService;
 import com.acco.life.service.UserMailConfigService;
 import com.acco.life.util.MailUtil;
 import com.acco.life.util.PythonScriptManager;
@@ -16,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/mailsync")
 @RequiredArgsConstructor
@@ -23,7 +29,8 @@ import reactor.core.publisher.Mono;
 public class MailSyncController {
 
     private final UserMailConfigService userMailConfigService;
-    private final PythonScriptManager pythonScriptManager;
+    private final PythonScriptManager pythonScriptManager; // reserved for future use
+    private final AccountTransactionUploadFileLogService accountTransactionUploadFileLogService;
 
     @PostMapping("/email")
     public Mono<ResponseEntity<String>> syncByEmail(@RequestBody MailSyncRequestDto req) {
@@ -35,21 +42,58 @@ public class MailSyncController {
                 })
                 .flatMapMany(Flux::fromIterable)
                 .switchIfEmpty(Flux.error(new IllegalStateException("未找到用户邮箱配置")))
-                .flatMap(cfg -> Mono.fromCallable(() -> doSyncWithMailUtil(cfg, req)))
+                .flatMap(cfg -> Mono.fromCallable(() -> doSyncWithMailUtilDetailed(cfg, req))
+                        .flatMapMany(Flux::fromIterable)
+                        .flatMap(att -> saveSyncLogWithFile(cfg, req, att))
+                        .map(dto -> dto.getFileName() + "|" + dto.getFilePath() + "|" + (dto.getMd5Checksum() == null ? "" : dto.getMd5Checksum())))
                 .collectList()
-                .map(results -> ResponseEntity.ok(String.join("\n\n", results)))
-                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())));
+                .map(list -> ResponseEntity.ok(String.join("\n", list)))
+                .onErrorResume(err -> Mono.just(ResponseEntity.badRequest().body(err.getMessage())));
     }
 
     private String doSyncWithMailUtil(UserMailConfigDto cfg, MailSyncRequestDto req) {
-        String host = cfg.getHost();
-        String port = cfg.getPort() == null ? null : String.valueOf(cfg.getPort());
-        String username = cfg.getEmailAddress();
-        String password = cfg.getAuthCode();
-        String date = req.getMailDate();
-        String destDir = "/Users/wensenzhang/workspaces/email/" + username;
-        // Use search+download by IMAP terms; if only one date provided, set both start and end
-        return MailUtil.searchAndDownloadAttachmentsBySender(host, port, username, password, req.getMailSender(), date, date, destDir);
+        MailSearchConfigDto config = new MailSearchConfigDto(
+                cfg.getHost(),
+                cfg.getPort() == null ? null : String.valueOf(cfg.getPort()),
+                cfg.getEmailAddress(),
+                cfg.getAuthCode(),
+                req.getMailSender(),
+                req.getMailDate(),
+                req.getMailDate(),
+                "/Users/wensenzhang/workspaces/email/" + cfg.getEmailAddress()
+        );
+        return MailUtil.searchAndDownloadAttachmentsBySender(config);
+    }
+
+    private List<MailUtil.DownloadedAttachment> doSyncWithMailUtilDetailed(UserMailConfigDto cfg, MailSyncRequestDto req) {
+        MailSearchConfigDto config = new MailSearchConfigDto(
+                cfg.getHost(),
+                cfg.getPort() == null ? null : String.valueOf(cfg.getPort()),
+                cfg.getEmailAddress(),
+                cfg.getAuthCode(),
+                req.getMailSender(),
+                req.getMailDate(),
+                req.getMailDate(),
+                "/Users/wensenzhang/workspaces/email/" + cfg.getEmailAddress()
+        );
+        return MailUtil.searchAndDownloadAttachmentsDetailed(config);
+    }
+
+    private Mono<AccountTransactionUploadFileLogDto> saveSyncLogWithFile(UserMailConfigDto cfg, MailSyncRequestDto req, MailUtil.DownloadedAttachment att) {
+        AccountTransactionUploadFileLogDto dto = new AccountTransactionUploadFileLogDto();
+        dto.setUserId(cfg.getUserId());
+        dto.setAccountId(req.getAccountId());
+        dto.setStatus(UploadLogStatus.PENDING.getCode());
+        dto.setFileName(att.fileName());
+        dto.setFilePath(att.filePath());
+        dto.setMd5Checksum(att.md5Checksum());
+        try {
+            if (req.getZipPassword() != null && !req.getZipPassword().isEmpty()) {
+                dto.setZipPassword(Integer.valueOf(req.getZipPassword()));
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return accountTransactionUploadFileLogService.save(Mono.just(dto));
     }
 }
 

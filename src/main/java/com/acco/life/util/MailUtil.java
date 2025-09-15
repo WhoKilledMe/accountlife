@@ -1,7 +1,10 @@
 package com.acco.life.util;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
+import com.acco.life.dto.MailSearchConfigDto;
 import jakarta.mail.*;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.internet.MimeUtility;
 import jakarta.mail.search.*;
@@ -18,8 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * description: 邮箱工具类，用于获取收件箱中标题包含“宁波银行”的邮件内容，并提取正文中的URL进行GET请求获取返回结果
@@ -30,60 +32,49 @@ import java.util.Properties;
  */
 public class MailUtil {
 
+
     /**
      * 基于发件人与日期（单日或范围）搜索并下载附件到指定目录
      */
-    public static String searchAndDownloadAttachmentsBySender(
-            String host,
-            String port,
-            String username,
-            String password,
-            String senderContains,
-            String startDate,
-            String endDate,
-            String destDirectory
-    ) {
+    public static String searchAndDownloadAttachmentsBySender(MailSearchConfigDto config) {
         StringBuilder result = new StringBuilder();
         try {
             Properties props = new Properties();
             props.setProperty("mail.store.protocol", "imaps");
-            props.setProperty("mail.imaps.host", host);
-            if (port != null) props.setProperty("mail.imaps.port", port);
+            props.setProperty("mail.imaps.host", config.getHost());
+            if (config.getPort() != null) props.setProperty("mail.imaps.port", config.getPort());
             props.put("mail.imaps.ssl.enable", "true");
             props.put("mail.imaps.ssl.trust", "*");
 
             Session session = Session.getInstance(props);
             Store store = session.getStore("imaps");
-            store.connect(username, password);
+            store.connect(config.getUsername(), config.getPassword());
             Folder inbox = store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
 
-            LocalDate start = parseLocalDateOrNull(startDate);
-            LocalDate end = parseLocalDateOrNull(endDate);
-            if (end != null) {
-                end = end.plusDays(1);
-            }
+            LocalDate start = parseLocalDateOrNull(config.getStartDate());
+            LocalDate end = parseLocalDateOrNull(config.getEndDate());
 
             SearchTerm term = null;
             if (start != null) {
                 Date sd = Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
                 SearchTerm dateTerm = new OrTerm(new SentDateTerm(ComparisonTerm.GE, sd), new ReceivedDateTerm(ComparisonTerm.GE, sd));
-                term =  new AndTerm(term, dateTerm);
+                term = term == null ? dateTerm : new AndTerm(term, dateTerm);
             }
             if (end != null) {
                 Date ed = Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
                 SearchTerm dateTerm = new OrTerm(new SentDateTerm(ComparisonTerm.LE, ed), new ReceivedDateTerm(ComparisonTerm.LE, ed));
                 term = term == null ? dateTerm : new AndTerm(term, dateTerm);
             }
-            if (CharSequenceUtil.isNotBlank(senderContains)) {
-                SearchTerm fromTerm = new FromStringTerm(senderContains);
+            if (CharSequenceUtil.isNotBlank(config.getSenderContains())) {
+                SearchTerm fromTerm = new FromStringTerm(config.getSenderContains());
                 term = term == null ? fromTerm : new AndTerm(term, fromTerm);
             }
 
             Message[] messages = term == null ? inbox.getMessages() : inbox.search(term);
 
             int downloaded = 0;
-            Path destDir = Path.of(destDirectory);
+            Path destDir = Path.of(config.getDestDirectory());
             if (!Files.exists(destDir)) {
                 Files.createDirectories(destDir);
             }
@@ -99,6 +90,61 @@ public class MailUtil {
             return "发生异常: " + e.getMessage();
         }
         return result.toString();
+    }
+
+    public static List<DownloadedAttachment> searchAndDownloadAttachmentsDetailed(MailSearchConfigDto config) {
+        List<DownloadedAttachment> list = new ArrayList<>();
+        try {
+            Properties props = new Properties();
+            props.setProperty("mail.store.protocol", "imaps");
+            props.setProperty("mail.imaps.host", config.getHost());
+            if (config.getPort() != null) props.setProperty("mail.imaps.port", config.getPort());
+            props.put("mail.imaps.ssl.enable", "true");
+            props.put("mail.imaps.ssl.trust", "*");
+
+            Session session = Session.getInstance(props);
+            Store store = session.getStore("imaps");
+            store.connect(config.getUsername(), config.getPassword());
+            Folder inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_ONLY);
+
+            LocalDate start = parseLocalDateOrNull(config.getStartDate());
+            LocalDate end = parseLocalDateOrNull(config.getEndDate());
+
+            SearchTerm term = null;
+
+            if (start != null) {
+                Date sd = Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                term = new ReceivedDateTerm(ComparisonTerm.GE, sd);
+            }
+            if (end != null) {
+                Date ed = Date.from(end.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+                SearchTerm dateTerm = new ReceivedDateTerm(ComparisonTerm.LE, ed);
+                term = term == null ? dateTerm : new AndTerm(term, dateTerm);
+            }
+
+            Message[] messages = term == null ? inbox.getMessages() : inbox.search(term);
+            Path destDir = Path.of(config.getDestDirectory());
+            if (!Files.exists(destDir)) {
+                Files.createDirectories(destDir);
+            }
+            if (messages != null) {
+                for (Message m : messages) {
+
+                    if (Arrays.stream(m.getFrom())
+                            .filter(InternetAddress.class::isInstance)
+                            .map(InternetAddress.class::cast)
+                            .anyMatch(address -> StrUtil.equals(address.getAddress(), config.getSenderContains()))) {
+                        saveAttachmentsDetailed(m, destDir, list);
+                    }
+                }
+            }
+            inbox.close(false);
+            store.close();
+        } catch (Exception e) {
+            // swallow and return collected so far
+        }
+        return list;
     }
 
     private static int saveAttachments(Message message, Path destDir) throws Exception {
@@ -123,9 +169,35 @@ public class MailUtil {
         return count;
     }
 
+    private static void saveAttachmentsDetailed(Message message, Path destDir, List<DownloadedAttachment> list) throws Exception {
+        if (message.isMimeType("multipart/*")) {
+            Multipart multipart = (Multipart) message.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                BodyPart bodyPart = multipart.getBodyPart(i);
+                String disp = bodyPart.getDisposition();
+                String filename = bodyPart.getFileName();
+                boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(disp) || (filename != null && !filename.isEmpty());
+                if (isAttachment) {
+                    String safeName = MimeUtility.decodeText(filename != null ? filename : ("attachment-" + i));
+                    Path target = destDir.resolve(safeName);
+                    try (var in = bodyPart.getInputStream()) {
+                        Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    String md5 = FileChecksumUtil.md5Hex(target);
+                    list.add(new DownloadedAttachment(safeName, target.toString(), md5));
+                }
+            }
+        }
+    }
+
+    public record DownloadedAttachment(String fileName, String filePath, String md5Checksum) {
+    }
+
     private static LocalDate parseLocalDateOrNull(String s) {
         try {
-            if (s == null || s.isEmpty()) return null;
+            if (s == null || s.isEmpty()) {
+                return null;
+            }
             return LocalDate.parse(s);
         } catch (Exception e) {
             return null;

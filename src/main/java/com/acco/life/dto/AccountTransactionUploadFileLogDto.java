@@ -39,6 +39,9 @@ public class AccountTransactionUploadFileLogDto extends BaseColumnDto {
     @Schema(name = "zipPassword", description = "压缩文件密码（如果有）")
     private Integer zipPassword;
 
+    @Schema(name = "uploadType", description = "上传类型：1-文件上传；2-邮箱附件同步")
+    private Integer uploadType;
+
     @Schema(name = "transactionStartDate", description = "交易开始日期")
     private LocalDateTime transactionStartDate;
 

@@ -49,7 +49,7 @@ public class AccountTransactionDto extends BaseColumnDto {
     @Schema(name = "transactionTime", description = "实际发生时间")
     private LocalDateTime transactionTime;
 
-    @Schema(name = "sourceType", description = "来源类型：1-bank，2-platform，3-credit_wallet")
+    @Schema(name = "sourceType", description = "来源类型：1、文件上传，2、邮箱文件同步，3、手动录入")
     private Integer sourceType;
 
     @Schema(name = "sourceRef", description = "原始账单唯一标识")

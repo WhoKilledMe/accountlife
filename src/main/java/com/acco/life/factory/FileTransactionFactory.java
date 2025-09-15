@@ -3,6 +3,7 @@ package com.acco.life.factory;
 import com.acco.life.dto.FileTransactionDto;
 import com.acco.life.dto.FileTransactionLabelDetail;
 import com.acco.life.dto.FileTransactionNingBoBank;
+import com.acco.life.dto.FileTransactionMeituan;
 import com.acco.life.enums.TransactionSourceType;
 
 import java.util.HashMap;
@@ -22,6 +23,7 @@ public class FileTransactionFactory {
     static {
         fileTransactionMap.put(TransactionSourceType.NING_BO_CREDIT, FileTransactionNingBoBank.class);
         fileTransactionMap.put(TransactionSourceType.LABEL_DETAIL, FileTransactionLabelDetail.class);
+        fileTransactionMap.put(TransactionSourceType.PLATFORM, FileTransactionMeituan.class);
     }
 
 }
