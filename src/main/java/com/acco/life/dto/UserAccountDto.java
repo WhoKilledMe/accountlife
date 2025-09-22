@@ -15,8 +15,8 @@ import java.math.BigDecimal;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Schema(name = "AssetAccountDto", description = "AssetAccount 数据传输对象")
-public class AssetAccountDto extends BaseColumnDto {
+@Schema(name = "UserAccountDto", description = "UserAccountDto 数据传输对象")
+public class UserAccountDto extends BaseColumnDto {
 
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
     private Long userId;

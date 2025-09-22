@@ -1,0 +1,74 @@
+@startuml
+title 个人资产管理系统核心 ER 图（含 business_transaction_flow + platform_transaction）
+
+entity "user_account" as UA {
+  * id : bigint <<PK>>
+  * user_id : bigint <<FK>>
+  * name : varchar
+  * type : tinyint
+  * platform_code : varchar
+  * account_number : varchar
+  * balance : decimal
+  * credit_limit : decimal
+  * is_virtual : tinyint
+  * currency : varchar
+  * description : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "account_transaction" as AT {
+  * id : bigint <<PK>>
+  * user_id : bigint <<FK>>
+  * account_id : bigint <<FK>> -- 关联 user_account
+  * type : tinyint  -- 1-income,2-expense,3-transfer_out,4-transfer_in
+  * amount : decimal
+  * business_id : bigint <<FK>> -- 可选，关联 business_transaction
+  * source_type : tinyint
+  * source_ref : varchar
+  * transaction_time : datetime
+  * description : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "business_transaction" as BT {
+  * id : bigint <<PK>>
+  * user_id : bigint <<FK>>
+  * type : tinyint -- 1-income,2-expense
+  * amount : decimal
+  * description : varchar
+  * transaction_time : datetime
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "business_transaction_flow" as BTF {
+  * id : bigint <<PK>>
+  * business_id : bigint <<FK>> -- 关联业务交易
+  * from_transaction_id : bigint <<FK>> -- account_transaction.id
+  * to_transaction_id : bigint <<FK>> -- account_transaction.id
+  * amount : decimal
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "platform_transaction" as PT {
+  * id : bigint <<PK>>
+  * user_id : bigint
+  * platform_code : varchar
+  * raw_json : text
+  * mapped_transaction_id : bigint <<FK>> -- 关联 business_transaction
+  * remark : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+' 关系
+UA ||--o{ AT : "账户流水"
+BT ||--o{ AT : "业务交易关联"
+BT ||--o{ BTF : "业务交易资金流"
+AT ||--o{ BTF : "资金流来源(from)"
+AT ||--o{ BTF : "资金流去向(to)"
+AT ||--o{ PT : "业务交易映射平台账单"
+@enduml

@@ -15,9 +15,9 @@ import java.math.BigDecimal;
  * @version V1.0.0
  */
 @EqualsAndHashCode(callSuper = true)
-@Table("asset_account")
+@Table("user_account")
 @Data
-public class AssetAccount extends BaseColumnEntity {
+public class UserAccount extends BaseColumnEntity {
 
     /**
      * 所属用户
@@ -31,6 +31,11 @@ public class AssetAccount extends BaseColumnEntity {
     @Column("name")
     private String name;
 
+    /**
+     * 父节点
+     */
+    @Column("parent_id")
+    private Long parentId;
     /**
      * 账户类型：1-bank，2-platform，3-credit_wallet，4-wallet
      */

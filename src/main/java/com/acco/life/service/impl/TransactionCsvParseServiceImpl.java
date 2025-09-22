@@ -4,12 +4,12 @@ import com.acco.life.dto.FileTransactionDto;
 import com.acco.life.dto.FileTransactionLabelDetail;
 import com.acco.life.dto.FileTransactionNingBoBank;
 import com.acco.life.entity.AccountTransaction;
-import com.acco.life.entity.AssetAccount;
+import com.acco.life.entity.UserAccount;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.factory.FileTransactionFactory;
 import com.acco.life.mapper.AccountTransactionMapper;
 import com.acco.life.repository.AccountTransactionRepository;
-import com.acco.life.repository.AssetAccountRepository;
+import com.acco.life.repository.UserAccountRepository;
 import com.acco.life.service.AiTransactionCategoryService;
 import com.acco.life.service.TransactionCsvParseService;
 import com.acco.life.service.csv.CsvParserStrategy;
@@ -37,7 +37,7 @@ import java.util.List;
 public class TransactionCsvParseServiceImpl implements TransactionCsvParseService {
     private final AccountTransactionMapper mapper;
     private final AccountTransactionRepository transactionRepository;
-    private final AssetAccountRepository accountRepository;
+    private final UserAccountRepository accountRepository;
     private final AiTransactionCategoryService aiTransactionCategoryService;
     private final java.util.List<CsvParserStrategy> parsers;
 
@@ -54,7 +54,7 @@ public class TransactionCsvParseServiceImpl implements TransactionCsvParseServic
                     
                     // 根据用户ID和账户名称获取账户ID
                     return accountRepository.findByUserIdAndName(userId, accountName)
-                            .map(AssetAccount::getId)
+                            .map(UserAccount::getId)
                             .switchIfEmpty(Mono.error(new IllegalArgumentException("未找到账户名称为: " + accountName + " 的账户")));
                 })
                 .flatMap(accountId -> {

@@ -19,14 +19,14 @@ public class PlatformTransactionDto extends BaseColumnDto {
     @Schema(name = "userId", description = "所属用户", accessMode = Schema.AccessMode.READ_ONLY)
     private Long userId;
 
-    @Schema(name = "platformCode", description = "平台编码")
-    private String platformCode;
+    @Schema(name = "accountId", description = "账户编码")
+    private Long accountId;
 
     @Schema(name = "rawJson", description = "原始账单JSON数据")
     private String rawJson;
 
-    @Schema(name = "mappedTransactionId", description = "映射到业务交易ID")
-    private Long mappedTransactionId;
+    @Schema(name = "transactionId", description = "交易Id")
+    private Long transactionId;
 
     @Schema(name = "remark", description = "备注")
     private String remark;

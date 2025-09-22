@@ -5,8 +5,6 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDateTime;
-
 /**
  * description: 平台交易实体类，对应数据库表platform_transaction
  *
@@ -26,10 +24,10 @@ public class PlatformTransaction extends BaseColumnEntity {
     private Long userId;
 
     /**
-     * 平台编码
+     * 账户编码
      */
-    @Column("platform_code")
-    private String platformCode;
+    @Column("account_id")
+    private Long accountId;
 
     /**
      * 原始账单JSON数据
@@ -40,8 +38,8 @@ public class PlatformTransaction extends BaseColumnEntity {
     /**
      * 映射到业务交易ID
      */
-    @Column("mapped_transaction_id")
-    private Long mappedTransactionId;
+    @Column("transaction_id")
+    private Long transactionId;
 
     /**
      * 备注

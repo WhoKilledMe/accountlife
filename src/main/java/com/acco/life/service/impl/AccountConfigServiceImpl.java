@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import com.acco.life.common.PageResponse;
 import com.acco.life.entity.AccountConfig;
-import com.acco.life.repository.AssetAccountRepository;
+import com.acco.life.repository.UserAccountRepository;
 import com.acco.life.util.UserUtil;
 
 /**
@@ -27,7 +27,7 @@ public class AccountConfigServiceImpl implements AccountConfigService {
     
     private final AccountConfigRepository repository;
     private final AccountConfigMapper mapper;
-    private final AssetAccountRepository assetAccountRepository;
+    private final UserAccountRepository userAccountRepository;
     
     @Override
     public Flux<AccountConfigDto> findAllActive() {
@@ -69,7 +69,7 @@ public class AccountConfigServiceImpl implements AccountConfigService {
                 .map(mapper::toDto)
                 .collectList()
                 .flatMap(list -> UserUtil.getCurrentUserId()
-                        .flatMap(uid -> assetAccountRepository.findAll()
+                        .flatMap(uid -> userAccountRepository.findAll()
                                 .filter(a -> a.getUserId() != null && a.getPlatformCode() != null && a.getUserId().equals(uid))
                                 .map(a -> a.getPlatformCode())
                                 .collectList()

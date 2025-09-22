@@ -1,10 +1,10 @@
 package com.acco.life.service.impl;
 
-import com.acco.life.dto.AssetAccountDto;
+import com.acco.life.dto.UserAccountDto;
 import com.acco.life.common.PageResponse;
-import com.acco.life.mapper.AssetAccountMapper;
-import com.acco.life.repository.AssetAccountRepository;
-import com.acco.life.service.AssetAccountService;
+import com.acco.life.mapper.UserAccountMapper;
+import com.acco.life.repository.UserAccountRepository;
+import com.acco.life.service.UserAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -20,28 +20,28 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class AssetAccountServiceImpl implements AssetAccountService {
+public class UserAccountServiceImpl implements UserAccountService {
 
-    private final AssetAccountRepository repository;
+    private final UserAccountRepository repository;
     
 
-    private final AssetAccountMapper mapper;
+    private final UserAccountMapper mapper;
 
 
     @Override
-    public Mono<List<AssetAccountDto>> findAll() {
+    public Mono<List<UserAccountDto>> findAll() {
         return repository.findAll()
                 .map(mapper::toDto).collectList();
     }
 
     @Override
-    public Mono<AssetAccountDto> findById(Long id) {
+    public Mono<UserAccountDto> findById(Long id) {
         return repository.findById(id)
         .map(mapper::toDto);
     }
 
     @Override
-    public Mono<AssetAccountDto> save(Mono<AssetAccountDto> dto) {
+    public Mono<UserAccountDto> save(Mono<UserAccountDto> dto) {
 
         return dto.map(mapper::toEntity)
             .flatMap(repository::save)
@@ -54,9 +54,9 @@ public class AssetAccountServiceImpl implements AssetAccountService {
     }
 
     @Override
-    public Mono<PageResponse<AssetAccountDto>> page(AssetAccountDto filter, int page, int size) {
+    public Mono<PageResponse<UserAccountDto>> page(UserAccountDto filter, int page, int size) {
         if (filter == null) {
-            filter = new AssetAccountDto();
+            filter = new UserAccountDto();
         }
         final int currentPage = Math.max(page, 0);
         final int pageSize = Math.max(size, 1);
@@ -68,7 +68,7 @@ public class AssetAccountServiceImpl implements AssetAccountService {
         String likeAccount = (filter.getAccountNumber() == null || filter.getAccountNumber().isEmpty()) ? null : "%" + filter.getAccountNumber() + "%";
         Long  userId = filter.getUserId();
 
-        Mono<java.util.List<AssetAccountDto>> dataMono = repository.search(likeName, likePlatform, likeAccount, userId, limit, offset)
+        Mono<java.util.List<UserAccountDto>> dataMono = repository.search(likeName, likePlatform, likeAccount, userId, limit, offset)
                 .map(mapper::toDto)
                 .collectList();
 

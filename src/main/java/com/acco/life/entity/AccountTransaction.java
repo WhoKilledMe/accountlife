@@ -45,6 +45,12 @@ public class AccountTransaction extends BaseColumnEntity {
     private BigDecimal amount;
 
     /**
+     * 折扣金额
+     */
+    @Column("discount_amount")
+    private BigDecimal discountAmount;
+
+    /**
      * 分类ID
      */
     @Column("category_id")

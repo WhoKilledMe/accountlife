@@ -1,6 +1,6 @@
 package com.acco.life.repository;
 
-import com.acco.life.entity.AssetAccount;
+import com.acco.life.entity.UserAccount;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.data.r2dbc.repository.Query;
 import reactor.core.publisher.Mono;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Flux;
  * @author wensen.zhang
  * @version V1.0.0
  */
-public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAccount, Long> {
+public interface UserAccountRepository extends ReactiveCrudRepository<UserAccount, Long> {
     
     /**
      * 根据用户ID和账户名称查询资产账户
@@ -22,7 +22,7 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
      * @param name 账户名称
      * @return 资产账户Mono对象
      */
-    Mono<AssetAccount> findByUserIdAndName(Long userId, String name);
+    Mono<UserAccount> findByUserIdAndName(Long userId, String name);
 
     /**
      * 根据用户ID和账户ID查询资产账户
@@ -31,7 +31,7 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
      * @param id 账户ID
      * @return 资产账户Mono对象
      */
-    Mono<AssetAccount> findByUserIdAndId(Long userId, Long id);
+    Mono<UserAccount> findByUserIdAndId(Long userId, Long id);
 
     @Query("""
         SELECT *
@@ -43,7 +43,7 @@ public interface AssetAccountRepository extends ReactiveCrudRepository<AssetAcco
         ORDER BY id DESC
         LIMIT :limit OFFSET :offset
     """)
-    Flux<AssetAccount> search(String name, String platformCode, String accountNumber, Long userId, long limit, long offset);
+    Flux<UserAccount> search(String name, String platformCode, String accountNumber, Long userId, long limit, long offset);
 
     @Query("""
         SELECT COUNT(1)

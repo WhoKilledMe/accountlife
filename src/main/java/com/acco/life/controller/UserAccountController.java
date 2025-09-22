@@ -1,8 +1,8 @@
 package com.acco.life.controller;
 
-import com.acco.life.dto.AssetAccountDto;
+import com.acco.life.dto.UserAccountDto;
 import com.acco.life.common.PageResponse;
-import com.acco.life.service.AssetAccountService;
+import com.acco.life.service.UserAccountService;
 import com.acco.life.util.UserIdInjectorUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,15 +24,15 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "AssetAccount 接口")
 @RestController
-@RequestMapping("/api/assetaccount")
+@RequestMapping("/api/useraccount")
 @RequiredArgsConstructor
-public class AssetAccountController {
+public class UserAccountController {
 
-    private final AssetAccountService service;
+    private final UserAccountService service;
 
     @Operation(summary = "查询所有 AssetAccount")
     @GetMapping
-    public Mono<ResponseEntity<List<AssetAccountDto>>> list() {
+    public Mono<ResponseEntity<List<UserAccountDto>>> list() {
         return service.findAll().map(ResponseEntity::ok)
                     .onErrorResume(e ->
                     Mono.just(ResponseEntity.badRequest().build()));
@@ -40,10 +40,10 @@ public class AssetAccountController {
 
     @Operation(summary = "分页查询 AssetAccount（数据库分页+模糊搜索）")
     @PostMapping("/page")
-    public Mono<ResponseEntity<PageResponse<AssetAccountDto>>> page(
+    public Mono<ResponseEntity<PageResponse<UserAccountDto>>> page(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestBody(required = false) AssetAccountDto filter
+            @RequestBody(required = false) UserAccountDto filter
     ) {
         return service.page(filter, page, size)
                 .map(ResponseEntity::ok)
@@ -52,7 +52,7 @@ public class AssetAccountController {
 
     @Operation(summary = "根据 ID 查询 AssetAccount")
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<AssetAccountDto>> get(@PathVariable Long  id) {
+    public Mono<ResponseEntity<UserAccountDto>> get(@PathVariable Long  id) {
         return service.findById(id).map(ResponseEntity::ok)
         .onErrorResume(e ->
         Mono.just(ResponseEntity.badRequest().build()));
@@ -60,7 +60,7 @@ public class AssetAccountController {
 
     @Operation(summary = "创建 AssetAccount")
     @PostMapping
-    public Mono<ResponseEntity<AssetAccountDto>> create(@RequestBody Mono<AssetAccountDto> dto) {
+    public Mono<ResponseEntity<UserAccountDto>> create(@RequestBody Mono<UserAccountDto> dto) {
         return UserIdInjectorUtil.withUserId(dto)
                 .flatMap(d -> service.save(Mono.just(d)))
                 .map(ResponseEntity::ok)
@@ -70,7 +70,7 @@ public class AssetAccountController {
 
     @Operation(summary = "更新 AssetAccount")
     @PutMapping
-    public Mono<ResponseEntity<AssetAccountDto>> update(@RequestBody Mono<AssetAccountDto> dto) {
+    public Mono<ResponseEntity<UserAccountDto>> update(@RequestBody Mono<UserAccountDto> dto) {
         return UserIdInjectorUtil.withUserId(dto)
                 .flatMap(d -> service.save(Mono.just(d)))
                 .map(ResponseEntity::ok)
@@ -86,7 +86,7 @@ public class AssetAccountController {
 
     @Operation(summary = "批量创建 AssetAccount")
     @PostMapping("/batch")
-    public Mono<ResponseEntity<List<AssetAccountDto>>> createBatch(@RequestBody List<AssetAccountDto> dtos) {
+    public Mono<ResponseEntity<List<UserAccountDto>>> createBatch(@RequestBody List<UserAccountDto> dtos) {
         return Flux.fromIterable(dtos)
                 .flatMap(d -> UserIdInjectorUtil.withUserId(Mono.just(d))
                         .flatMap(dd -> service.save(Mono.just(dd))))
@@ -97,14 +97,14 @@ public class AssetAccountController {
 
     @Operation(summary = "下拉选择-分页查询 AssetAccount（支持名称模糊查询）")
     @GetMapping("/select")
-    public Mono<ResponseEntity<PageResponse<AssetAccountDto>>> select(
+    public Mono<ResponseEntity<PageResponse<UserAccountDto>>> select(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "accountName", required = false) String accountName
     ) {
         return service.findAll()
                 .map(list -> {
-                    List<AssetAccountDto> filtered = list;
+                    List<UserAccountDto> filtered = list;
                     if (accountName != null && !accountName.isEmpty()) {
                         filtered = list.stream()
                                 .filter(a -> a.getName() != null && a.getName().toLowerCase().contains(accountName.toLowerCase()))

@@ -2,7 +2,7 @@ package com.acco.life.service.impl;
 
 import com.acco.life.dto.StatisticsDto;
 import com.acco.life.entity.AccountTransaction;
-import com.acco.life.entity.AssetAccount;
+import com.acco.life.entity.UserAccount;
 import com.acco.life.entity.FixedAsset;
 import com.acco.life.mapper.StatisticsMapper;
 import com.acco.life.repository.*;
@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
     private final AccountTransactionRepository transactionRepository;
-    private final AssetAccountRepository assetAccountRepository;
+    private final UserAccountRepository userAccountRepository;
     private final InvestmentAssetRepository investmentAssetRepository;
     private final FixedAssetRepository fixedAssetRepository;
     private final TransactionCategoryRepository categoryRepository;
@@ -31,9 +31,9 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public Mono<StatisticsDto> getUserTotalAssets(Long userId) {
-        Mono<BigDecimal> assetSum = assetAccountRepository.findAll()
+        Mono<BigDecimal> assetSum = userAccountRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
-                .map(AssetAccount::getBalance)
+                .map(UserAccount::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         Mono<BigDecimal> investSum = investmentAssetRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
@@ -127,7 +127,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public Mono<List<StatisticsDto>> getAccountBalanceStatistics(Long userId) {
-        return assetAccountRepository.findAll()
+        return userAccountRepository.findAll()
                 .filter(a -> a.getUserId().equals(userId))
                 .map(a -> StatisticsDto.builder()
                         .userId(userId)

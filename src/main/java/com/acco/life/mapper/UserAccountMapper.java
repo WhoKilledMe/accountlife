@@ -1,7 +1,7 @@
 package com.acco.life.mapper;
 
-import com.acco.life.dto.AssetAccountDto;
-import com.acco.life.entity.AssetAccount;
+import com.acco.life.dto.UserAccountDto;
+import com.acco.life.entity.UserAccount;
 import org.mapstruct.Mapper;
 
 /**
@@ -12,10 +12,10 @@ import org.mapstruct.Mapper;
  * @version V1.0.0
  */
 @Mapper(componentModel = "spring")
-public interface AssetAccountMapper {
+public interface UserAccountMapper {
 
-    AssetAccount toEntity(AssetAccountDto dto);
+    UserAccount toEntity(UserAccountDto dto);
 
-    AssetAccountDto toDto(AssetAccount entity);
+    UserAccountDto toDto(UserAccount entity);
 
 }

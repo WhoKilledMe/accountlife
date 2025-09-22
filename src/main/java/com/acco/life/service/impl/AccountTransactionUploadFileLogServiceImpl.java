@@ -3,7 +3,7 @@ package com.acco.life.service.impl;
 import com.acco.life.common.PageResponse;
 import com.acco.life.dto.AccountTransactionUploadFileLogDto;
 import com.acco.life.mapper.AccountTransactionUploadFileLogMapper;
-import com.acco.life.repository.AssetAccountRepository;
+import com.acco.life.repository.UserAccountRepository;
 import com.acco.life.repository.UserRepository;
 import com.acco.life.repository.AccountTransactionUploadFileLogRepository;
 import com.acco.life.service.AccountTransactionUploadFileLogService;
@@ -20,7 +20,7 @@ public class AccountTransactionUploadFileLogServiceImpl implements AccountTransa
     private final AccountTransactionUploadFileLogRepository repository;
     private final AccountTransactionUploadFileLogMapper accountTransactionUploadFileLogMapper;
     private final UserRepository userRepository;
-    private final AssetAccountRepository assetAccountRepository;
+    private final UserAccountRepository userAccountRepository;
 
     @Override
     public Mono<List<AccountTransactionUploadFileLogDto>> findAll() {
@@ -80,7 +80,7 @@ public class AccountTransactionUploadFileLogServiceImpl implements AccountTransa
 
         Mono<AccountTransactionUploadFileLogDto> accountMono = dto.getAccountId() == null || dto.getUserId() == null
                 ? Mono.just(dto)
-                : assetAccountRepository.findByUserIdAndId(dto.getUserId(), dto.getAccountId())
+                : userAccountRepository.findByUserIdAndId(dto.getUserId(), dto.getAccountId())
                 .map(acc -> {
                     dto.setAccountName(acc.getName());
                     return dto;

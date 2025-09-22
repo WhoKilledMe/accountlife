@@ -268,13 +268,13 @@ CREATE TABLE `account_transaction`
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `asset_account`
+-- Table structure for table `user_account`
 --
 
-DROP TABLE IF EXISTS `asset_account`;
+DROP TABLE IF EXISTS `user_account`;
 /*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `asset_account`
+CREATE TABLE `user_account`
 (
     `id`             bigint  NOT NULL AUTO_INCREMENT COMMENT '账户ID',
     `user_id`        bigint  NOT NULL COMMENT '所属用户',
@@ -294,7 +294,7 @@ CREATE TABLE `asset_account`
     `is_deleted`     tinyint                                 DEFAULT '0' COMMENT '是否删除（0-否，1-是）',
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
-    CONSTRAINT `asset_account_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+    CONSTRAINT `user_account_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 6
   DEFAULT CHARSET = utf8mb4
@@ -302,13 +302,13 @@ CREATE TABLE `asset_account`
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `asset_account`
+-- Dumping data for table `user_account`
 --
 
-LOCK TABLES `asset_account` WRITE;
-/*!40000 ALTER TABLE `asset_account`
+LOCK TABLES `user_account` WRITE;
+/*!40000 ALTER TABLE `user_account`
     DISABLE KEYS */;
-INSERT INTO `asset_account`
+INSERT INTO `user_account`
 VALUES (1, 3, '工商银行储蓄卡', 1, 'ICBC', NULL, 10000.00, 0, NULL, 'CNY', '主要储蓄账户', 'system',
         '2025-08-12 17:20:51', 'system', '2025-09-03 10:09:47', 0),
        (2, 3, '支付宝余额', 2, 'ALIPAY', NULL, 5000.00, 0, NULL, 'CNY', '日常消费账户', 'system', '2025-08-12 17:20:51',
@@ -319,7 +319,7 @@ VALUES (1, 3, '工商银行储蓄卡', 1, 'ICBC', NULL, 10000.00, 0, NULL, 'CNY'
         'system', '2025-09-03 10:09:47', 0),
        (5, 3, '宁波信用卡', 3, 'NINGBO', NULL, 0.00, 0, NULL, 'CNY', '信用卡', 'system', '2025-08-12 19:53:09',
         'system', '2025-08-12 19:53:09', 0);
-/*!40000 ALTER TABLE `asset_account`
+/*!40000 ALTER TABLE `user_account`
     ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4930,9 +4930,9 @@ CREATE TABLE `platform_transaction`
 (
     `id`                    bigint NOT NULL AUTO_INCREMENT COMMENT '平台账单ID',
     `user_id`               bigint       DEFAULT NULL COMMENT '所属用户',
-    `platform_code`         varchar(50)  DEFAULT NULL COMMENT '平台编码',
+    `account_id`         bigint  DEFAULT NULL COMMENT '账户编码',
     `raw_json`              text COMMENT '原始账单JSON数据',
-    `mapped_transaction_id` bigint       DEFAULT NULL COMMENT '映射到业务交易ID',
+    `transaction_id` bigint       DEFAULT NULL COMMENT '映射到业务交易ID',
     `remark`                varchar(255) DEFAULT NULL COMMENT '备注',
     `created_by`            varchar(50)  DEFAULT 'system' COMMENT '创建人',
     `created_at`            datetime     DEFAULT CURRENT_TIMESTAMP COMMENT '导入时间',

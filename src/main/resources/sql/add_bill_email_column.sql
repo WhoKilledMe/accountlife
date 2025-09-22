@@ -17,3 +17,11 @@ UPDATE `account_config` SET `bill_email` = 'creditcardcenter@cardmail.psbcltd.cn
 -- 滴滴、携程、去哪儿等：账单邮件由官方邮箱发送，具体地址需查看实际邮件
 
 select * from account_config;
+
+ALTER TABLE business_transaction
+    ADD COLUMN discount_amount DECIMAL(18,2)  DEFAULT 0 COMMENT '业务折扣/优惠金额' after  amount;
+
+
+ALTER TABLE account_transaction
+    ADD COLUMN discount_amount DECIMAL(18,2)  DEFAULT 0 COMMENT '业务折扣/优惠金额' after  amount;
+

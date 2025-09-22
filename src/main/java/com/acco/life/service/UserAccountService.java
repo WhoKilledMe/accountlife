@@ -1,6 +1,6 @@
 package com.acco.life.service;
 
-import com.acco.life.dto.AssetAccountDto;
+import com.acco.life.dto.UserAccountDto;
 import com.acco.life.common.PageResponse;
 import reactor.core.publisher.Mono;
 
@@ -13,18 +13,18 @@ import java.util.List;
  * @author wensen.zhang
  * @version V1.0.0
  */
-public interface AssetAccountService {
+public interface UserAccountService {
 
-     Mono<List<AssetAccountDto>> findAll();
+     Mono<List<UserAccountDto>> findAll();
 
-     Mono<AssetAccountDto> findById(Long id);
+     Mono<UserAccountDto> findById(Long id);
 
-     Mono<AssetAccountDto> save(Mono<AssetAccountDto> entity);
+     Mono<UserAccountDto> save(Mono<UserAccountDto> entity);
 
      Mono<Void> deleteById(Long id);
 
      /**
       * 数据库分页+模糊搜索
       */
-     Mono<PageResponse<AssetAccountDto>> page(AssetAccountDto filter, int page, int size);
+     Mono<PageResponse<UserAccountDto>> page(UserAccountDto filter, int page, int size);
 }

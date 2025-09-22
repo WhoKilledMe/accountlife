@@ -1,0 +1,32 @@
+@startuml
+title 账单导入与总账记账流程
+
+actor 用户
+participant "美团账单" as MT
+participant "微信账单" as WX
+participant "宁波银行账单" as NB
+participant "account_transaction\n(账单明细表)" as AT
+participant "business_transaction\n(总账表)" as BT
+participant "transaction_flow\n(资金流向表)" as TF
+
+用户 -> MT : 导入美团账单
+用户 -> WX : 导入微信账单
+用户 -> NB : 导入宁波银行账单
+
+MT -> AT : 插入美团账单流水\n(business_id=1001)
+WX -> AT : 插入微信账单流水\n(business_id=1001)
+NB -> AT : 插入银行账单流水\n(business_id=1001)
+
+note right of AT
+三条流水都指向同一个\nbusiness_transaction
+end note
+
+AT -> BT : 插入一条总账记录\n美团购物100元 (id=1001)
+
+AT -> TF : 银行流水 → 微信流水
+AT -> TF : 微信流水 → 美团流水
+
+note right of BT
+统计支出时\n只算一次总账金额
+end note
+@enduml

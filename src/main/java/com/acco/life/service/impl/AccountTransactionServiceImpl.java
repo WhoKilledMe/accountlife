@@ -4,7 +4,7 @@ import com.acco.life.dto.AccountTransactionDto;
 import com.acco.life.common.PageResponse;
 import com.acco.life.mapper.AccountTransactionMapper;
 import com.acco.life.repository.AccountTransactionRepository;
-import com.acco.life.repository.AssetAccountRepository;
+import com.acco.life.repository.UserAccountRepository;
 import com.acco.life.repository.TransactionCategoryRepository;
 import com.acco.life.service.AccountTransactionService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
 
     private final AccountTransactionRepository repository;
     private final TransactionCategoryRepository categoryRepository;
-    private final AssetAccountRepository assetAccountRepository;
+    private final UserAccountRepository userAccountRepository;
 
     private final AccountTransactionMapper accountTransactionMapper;
 
@@ -96,7 +96,7 @@ public class AccountTransactionServiceImpl implements AccountTransactionService 
 
         Mono<AccountTransactionDto> accountMono = dto.getAccountId() == null || dto.getUserId() == null
             ? Mono.just(dto)
-            : assetAccountRepository.findByUserIdAndId(dto.getUserId(), dto.getAccountId())
+            : userAccountRepository.findByUserIdAndId(dto.getUserId(), dto.getAccountId())
                 .map(account -> { dto.setAccountName(account.getName()); return dto; })
                 .defaultIfEmpty(dto);
 
