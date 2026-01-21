@@ -1,5 +1,8 @@
 package com.acco.life.event;
 
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
 /**
  * description: [此处简要描述文件功能]
  *
@@ -7,5 +10,11 @@ package com.acco.life.event;
  * @version V1.0.0
  * @date: 2025-09-23 11:56:38
  */
-public class AccountTransactionPlam {
+@Component
+public class AccountTransactionPlatformListener {
+
+    @EventListener
+    public void handleAccountTransactionPlatformEvent(AccountTransactionEvent event) {
+        // do something
+    }
 }

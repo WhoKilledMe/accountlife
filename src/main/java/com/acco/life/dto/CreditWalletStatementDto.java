@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+
 /**
  * description: 信用钱包账单数据传输对象，用于封装信用钱包账单相关数据
  *

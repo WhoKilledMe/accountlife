@@ -33,23 +33,32 @@ public class MeituanCsvParser implements CsvParserStrategy {
         List<FileTransactionMeituan> list = it.readAll();
         List<FileTransactionLabelDetail> normalized = new ArrayList<>();
         for (FileTransactionMeituan mt : list) {
-            if (mt.getOrderTitle() == null || mt.getOrderTitle().isEmpty()) continue;
-            if (mt.getPaidAmount() == null || mt.getPaidAmount().isEmpty()) continue;
-            FileTransactionLabelDetail tmp = new FileTransactionLabelDetail();
-            if (mt.getSuccessTime() != null && mt.getSuccessTime().length() >= 10) {
-                tmp.setTransactionDate(mt.getSuccessTime().substring(0, 10));
-                tmp.setAccountingDate(tmp.getTransactionDate());
+            if (mt.getOrderTitle() == null || mt.getOrderTitle().isEmpty()) {
+                continue;
             }
-            tmp.setTransactionSummary(mt.getOrderTitle());
-            String amt = mt.getPaidAmount().replace("¥", "").trim();
-            if ("收入".equals(mt.getIncomeOrExpense())) {
-                tmp.setTransactionAmount(amt);
-            } else {
-                tmp.setTransactionAmount("-" + amt);
+            if (mt.getPaidAmount() == null || mt.getPaidAmount().isEmpty()) {
+                continue;
             }
+            FileTransactionLabelDetail tmp = getFileTransactionLabelDetail(mt);
             normalized.add(tmp);
         }
         return normalized;
+    }
+
+    private static FileTransactionLabelDetail getFileTransactionLabelDetail(FileTransactionMeituan mt) {
+        FileTransactionLabelDetail tmp = new FileTransactionLabelDetail();
+        if (mt.getSuccessTime() != null && mt.getSuccessTime().length() >= 10) {
+            tmp.setTransactionDate(mt.getSuccessTime().substring(0, 10));
+            tmp.setAccountingDate(tmp.getTransactionDate());
+        }
+        tmp.setTransactionSummary(mt.getOrderTitle());
+        String amt = mt.getPaidAmount().replace("¥", "").trim();
+        if ("收入".equals(mt.getIncomeOrExpense())) {
+            tmp.setTransactionAmount(amt);
+        } else {
+            tmp.setTransactionAmount("-" + amt);
+        }
+        return tmp;
     }
 
     @Override

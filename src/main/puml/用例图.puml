@@ -1,0 +1,90 @@
+@startuml
+left to right direction
+
+actor 用户
+actor 平台系统
+actor 支付平台
+actor 银行系统
+actor 信用系统
+actor 文件系统
+
+rectangle "个人多源账务系统" {
+
+  package "账单采集系统" {
+    usecase "导入平台账单" as UC1
+    usecase "导入支付账单" as UC2
+    usecase "导入信用账单" as UC3
+    usecase "导入银行账单" as UC4
+    usecase "文件上传解析" as UC5
+    usecase "账单自动同步" as UC6
+  }
+
+  package "账户管理系统" {
+    usecase "维护账户信息" as UC7
+    usecase "配置账户关系" as UC8
+  }
+
+  package "对账清算系统" {
+    usecase "生成交易指纹" as UC9
+    usecase "自动对账归并" as UC10
+    usecase "拆单合单处理" as UC11
+    usecase "异常账识别" as UC12
+    usecase "手工账单校正" as UC13
+  }
+
+  package "资金流建模系统" {
+    usecase "构建真实交易流" as UC14
+    usecase "构建资金拓扑图" as UC15
+    usecase "层级聚合展示" as UC16
+    usecase "资金路径分析" as UC17
+  }
+
+  package "资产负债系统" {
+    usecase "计算资产余额" as UC18
+    usecase "计算负债余额" as UC19
+    usecase "计算净资产" as UC20
+  }
+
+  package "分析与报表系统" {
+    usecase "消费分析" as UC21
+    usecase "账户分析" as UC22
+    usecase "分类分析" as UC23
+    usecase "生成财务报表" as UC24
+  }
+}
+
+用户 --> UC1
+用户 --> UC2
+用户 --> UC3
+用户 --> UC4
+用户 --> UC7
+用户 --> UC8
+用户 --> UC13
+用户 --> UC15
+用户 --> UC17
+用户 --> UC21
+用户 --> UC24
+
+平台系统 --> UC1
+支付平台 --> UC2
+信用系统 --> UC3
+银行系统 --> UC4
+文件系统 --> UC5
+
+UC1 --> UC5
+UC2 --> UC5
+UC3 --> UC5
+UC4 --> UC5
+
+UC5 --> UC9
+UC9 --> UC10
+UC10 --> UC14
+UC14 --> UC15
+UC15 --> UC17
+UC14 --> UC18
+UC14 --> UC19
+UC18 --> UC20
+UC19 --> UC20
+UC20 --> UC24
+
+@enduml

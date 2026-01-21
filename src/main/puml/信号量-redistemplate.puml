@@ -1,27 +1,22 @@
 @startuml
-title 架构三：Redis 锁 + 计数器（不可靠方案）
+title 架构二：RedisTemplate + ZSET 信号量（弱一致）
 
 node "业务服务实例" {
-    component "Semaphore Logic"
-    component "Redis Lock"
+    component "RedisTemplateTtsSemaphoreImpl"
+    component "并发控制逻辑\n(清理 / 计数 / 占用)"
 }
 
 node "Redis" {
-    database "Counter\n(currentPermits)"
+    database "ZSET\npermitId -> expireTime"
 }
 
-"Semaphore Logic" --> "Redis Lock" : SETNX / DEL
-"Semaphore Logic" --> "Counter\n(currentPermits)" : INCR / DECR
+"RedisTemplateTtsSemaphoreImpl" --> "并发控制逻辑\n(清理 / 计数 / 占用)"
+"并发控制逻辑\n(清理 / 计数 / 占用)" --> "ZSET\npermitId -> expireTime" : ZREMRANGEBYSCORE\nZCARD\nZADD
 
-note right of "Counter\n(currentPermits)"
-- 无 permitId
-- 无 TTL
-- 无法区分持有者
-end note
-
-note bottom of "Semaphore Logic"
-异常 / 崩溃 / 超时
-=> DECR 不执行
-=> 计数永久失真
+note right of "RedisTemplateTtsSemaphoreImpl"
+- acquire 非原子
+- 并发窗口可能超发
+- permit 依赖 TTL 回收
+- 无 WatchDog
 end note
 @enduml

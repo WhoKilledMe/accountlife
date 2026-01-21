@@ -2,7 +2,10 @@ package com.acco.life.service.csv;
 
 import com.acco.life.dto.FileTransactionDto;
 import com.acco.life.dto.FileTransactionLabelDetail;
+import com.acco.life.entity.AccountTransaction;
 import com.acco.life.enums.TransactionSourceType;
+import com.acco.life.mapper.AccountTransactionMapper;
+import com.acco.life.service.AiTransactionCategoryService;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -32,12 +35,12 @@ public class LabelDetailCsvParser implements CsvParserStrategy {
     }
 
     @Override
-    public List<Mono<com.acco.life.entity.AccountTransaction>> buildTransactions(List<? extends FileTransactionDto> dtos,
-                                                                                 Long userId,
-                                                                                 Long accountId,
-                                                                                 TransactionSourceType sourceType,
-                                                                                 com.acco.life.mapper.AccountTransactionMapper mapper,
-                                                                                 com.acco.life.service.AiTransactionCategoryService aiService) {
+    public List<Mono<AccountTransaction>> buildTransactions(List<? extends FileTransactionDto> dtos,
+                                                            Long userId,
+                                                            Long accountId,
+                                                            TransactionSourceType sourceType,
+                                                            AccountTransactionMapper mapper,
+                                                            AiTransactionCategoryService aiService) {
         return dtos.stream().map(dto -> {
             FileTransactionLabelDetail ld = (FileTransactionLabelDetail) dto;
             return aiService.inferTransactionCategory(ld.getTransactionSummary(), ld.getTransactionAmount(), userId)

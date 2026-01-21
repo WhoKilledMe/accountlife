@@ -1,27 +1,24 @@
 @startuml
-title 架构三：Redis 锁 + 计数器（不可靠方案）
+title 架构一：Redisson 分布式可过期信号量（强一致）
 
 node "业务服务实例" {
-    component "Semaphore Logic"
-    component "Redis Lock"
+    component "TtsSemaphore\n(DefaultTtsSemaphoreImpl)"
+    component "RedissonClient"
 }
 
 node "Redis" {
-    database "Counter\n(currentPermits)"
+    component "Lua Script\n(信号量引擎)"
+    database "Semaphore State\n(permit + TTL)"
 }
 
-"Semaphore Logic" --> "Redis Lock" : SETNX / DEL
-"Semaphore Logic" --> "Counter\n(currentPermits)" : INCR / DECR
+"TtsSemaphore\n(DefaultTtsSemaphoreImpl)" --> "RedissonClient"
+"RedissonClient" --> "Lua Script\n(信号量引擎)" : tryAcquire / release
+"Lua Script\n(信号量引擎)" --> "Semaphore State\n(permit + TTL)"
 
-note right of "Counter\n(currentPermits)"
-- 无 permitId
-- 无 TTL
-- 无法区分持有者
-end note
-
-note bottom of "Semaphore Logic"
-异常 / 崩溃 / 超时
-=> DECR 不执行
-=> 计数永久失真
+note right of "Lua Script\n(信号量引擎)"
+- 原子清理过期
+- 原子校验 permits
+- 原子分配 permitId
+- WatchDog 自动续期
 end note
 @enduml

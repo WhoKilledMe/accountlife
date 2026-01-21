@@ -25,3 +25,7 @@ ALTER TABLE business_transaction
 ALTER TABLE account_transaction
     ADD COLUMN discount_amount DECIMAL(18,2)  DEFAULT 0 COMMENT '业务折扣/优惠金额' after  amount;
 
+
+ALTER TABLE account_transaction
+    ADD COLUMN external_ DECIMAL(18,2)  DEFAULT 0 COMMENT '业务折扣/优惠金额' after  amount;
+
