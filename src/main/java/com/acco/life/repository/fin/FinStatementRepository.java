@@ -1,0 +1,92 @@
+package com.acco.life.repository.fin;
+
+import com.acco.life.entity.fin.FinStatement;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+
+/**
+ * 账单行表 Repository
+ *
+ * @author wensen.zhang
+ * @version V2.0.0
+ */
+public interface FinStatementRepository extends ReactiveCrudRepository<FinStatement, Long> {
+
+    /**
+     * 根据文件ID查询
+     */
+    Flux<FinStatement> findByFileId(Long fileId);
+
+    /**
+     * 根据文件ID和行Hash查询（幂等检查）
+     */
+    Mono<FinStatement> findByFileIdAndRawRowHash(Long fileId, String rawRowHash);
+
+    /**
+     * 根据用户ID查询
+     */
+    Flux<FinStatement> findByUserId(Long userId);
+
+    /**
+     * 根据用户ID和状态查询
+     */
+    Flux<FinStatement> findByUserIdAndStatus(Long userId, String status);
+
+    /**
+     * 根据用户ID和平台代码查询
+     */
+    Flux<FinStatement> findByUserIdAndPlatformCode(Long userId, String platformCode);
+
+    /**
+     * 根据平台订单号查询
+     */
+    Mono<FinStatement> findByOutTradeNo(String outTradeNo);
+
+    /**
+     * 根据用户ID和时间范围查询
+     */
+    @Query("""
+        SELECT * FROM fin_statement 
+        WHERE user_id = :userId 
+          AND stmt_time >= :startTime 
+          AND stmt_time <= :endTime
+        ORDER BY stmt_time DESC
+    """)
+    Flux<FinStatement> findByUserIdAndTimeRange(Long userId, LocalDateTime startTime, LocalDateTime endTime);
+
+    /**
+     * 查询待对账的账单（状态为NEW或PARSED）
+     */
+    @Query("SELECT * FROM fin_statement WHERE user_id = :userId AND status IN ('NEW', 'PARSED') ORDER BY stmt_time ASC")
+    Flux<FinStatement> findPendingReconciliation(Long userId);
+
+    /**
+     * 分页查询
+     */
+    @Query("""
+        SELECT * FROM fin_statement 
+        WHERE (:userId IS NULL OR user_id = :userId)
+          AND (:fileId IS NULL OR file_id = :fileId)
+          AND (:platformCode IS NULL OR platform_code = :platformCode)
+          AND (:status IS NULL OR status = :status)
+        ORDER BY stmt_time DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    Flux<FinStatement> search(Long userId, Long fileId, String platformCode, String status, long limit, long offset);
+
+    /**
+     * 统计查询
+     */
+    @Query("""
+        SELECT COUNT(1) FROM fin_statement 
+        WHERE (:userId IS NULL OR user_id = :userId)
+          AND (:fileId IS NULL OR file_id = :fileId)
+          AND (:platformCode IS NULL OR platform_code = :platformCode)
+          AND (:status IS NULL OR status = :status)
+    """)
+    Mono<Long> countSearch(Long userId, Long fileId, String platformCode, String status);
+}
