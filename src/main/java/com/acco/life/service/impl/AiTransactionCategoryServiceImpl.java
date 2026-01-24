@@ -76,17 +76,12 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
         
         // 如果没有找到匹配的分类，根据交易类型返回默认分类
         TransactionType transactionType = inferTransactionType(transactionSummary, amount);
-        switch (transactionType) {
-            case INCOME:
-                return CategoryType.OTHER_INCOME;
-            case TRANSFER_OUT:
-                return CategoryType.ACCOUNT_TRANSFER;
-            case TRANSFER_IN:
-                return CategoryType.TRANSFER_IN;
-            case EXPENSE:
-            default:
-                return CategoryType.OTHER_EXPENSE;
-        }
+        return switch (transactionType) {
+            case INCOME -> CategoryType.OTHER_INCOME;
+            case TRANSFER_OUT -> CategoryType.ACCOUNT_TRANSFER;
+            case TRANSFER_IN -> CategoryType.TRANSFER_IN;
+            default -> CategoryType.OTHER_EXPENSE;
+        };
     }
 
     @Override

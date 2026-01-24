@@ -16,7 +16,10 @@ public enum TransactionSourceType {
     LABEL_DETAIL(1, "LabelDetail账单"),
     BANK(2, "银行"),
     PLATFORM(3, "平台"),
-    CREDIT_WALLET(4, "信用钱包");
+    CREDIT_WALLET(4, "信用钱包"),
+    ALIPAY(5, "支付宝"),
+    WECHAT(6, "微信支付"),
+    JINGDONG(7, "京东");
 
     public final int code;
     public final String name;

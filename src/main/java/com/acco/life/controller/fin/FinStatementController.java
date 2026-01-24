@@ -8,6 +8,7 @@ import com.acco.life.entity.fin.FinStatementFile;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.repository.fin.FinStatementFileRepository;
 import com.acco.life.repository.fin.FinStatementRepository;
+import com.acco.life.service.AiTransactionCategoryService;
 import com.acco.life.service.csv.FinStatementCsvParser;
 import com.acco.life.service.fin.FinStatementService;
 import com.acco.life.util.UserUtil;
@@ -44,6 +45,7 @@ public class FinStatementController {
     private final FinStatementFileRepository statementFileRepository;
     private final FinStatementRepository statementRepository;
     private final List<FinStatementCsvParser> csvParsers;
+    private final AiTransactionCategoryService categoryService;
 
     /**
      * 上传并解析账单文件
@@ -95,7 +97,7 @@ public class FinStatementController {
                                                                 try {
                                                                     // 解析文件
                                                                     var dtos = parser.parse(Files.newInputStream(tempFile));
-                                                                    var statements = parser.buildStatements(dtos, userId, savedFile.getId());
+                                                                    var statements = parser.buildStatements(dtos, userId, savedFile.getId(), categoryService);
                                                                     
                                                                     // 保存账单行
                                                                     return statementRepository.saveAll(statements)

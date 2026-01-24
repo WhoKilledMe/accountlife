@@ -117,6 +117,7 @@ public class FinReconciliationServiceImpl implements FinReconciliationService {
                     txDto.setCounterparty(statement.getCounterparty());
                     txDto.setPlatformCode(statement.getPlatformCode());
                     txDto.setRemark(statement.getDescription());
+                    txDto.setCategoryId(statement.getCategoryId());
                     
                     return transactionService.create(txDto)
                             .flatMap(tx -> {
@@ -154,6 +155,7 @@ public class FinReconciliationServiceImpl implements FinReconciliationService {
                     txDto.setCounterparty(first.getCounterparty());
                     txDto.setPlatformCode(first.getPlatformCode());
                     txDto.setRemark("合并自 " + statements.size() + " 条账单");
+                    txDto.setCategoryId(first.getCategoryId());
                     
                     return transactionService.create(txDto)
                             .flatMap(tx -> {
@@ -248,12 +250,102 @@ public class FinReconciliationServiceImpl implements FinReconciliationService {
 
     /**
      * 尝试自动归并账单到交易
+     * 智能匹配：优先查找已存在的匹配交易，如果没有则创建新交易
      */
     private Mono<FinTransactionStatementMapDto> tryAutoMergeToTransaction(FinStatement statement) {
-        // 简单实现：每条账单创建一笔交易
-        return createTransactionFromStatement(statement.getId())
-                .flatMap(tx -> transactionStatementMapRepository.findByTransactionIdAndStatementId(tx.getId(), statement.getId()))
-                .map(transactionStatementMapMapper::toDto);
+        // 1. 尝试通过订单号、金额、时间查找匹配的账单
+        return findMatchingStatements(statement)
+                .collectList()
+                .flatMap(matchingStatements -> {
+                    if (matchingStatements.isEmpty()) {
+                        // 没有匹配的账单，创建新交易
+                        return createTransactionFromStatement(statement.getId())
+                                .flatMap(tx -> transactionStatementMapRepository.findByTransactionIdAndStatementId(tx.getId(), statement.getId()))
+                                .map(transactionStatementMapMapper::toDto);
+                    } else {
+                        // 找到匹配的账单，检查是否已有交易
+                        return findOrCreateTransactionForStatements(statement, matchingStatements);
+                    }
+                });
+    }
+
+    /**
+     * 查找匹配的账单（通过订单号、金额、时间）
+     */
+    private Flux<FinStatement> findMatchingStatements(FinStatement statement) {
+        // 从原始数据中提取商户订单号（如果存在）
+        String merchantOrderNo = extractMerchantOrderNo(statement);
+        
+        // 时间范围：前后5分钟
+        LocalDateTime startTime = statement.getStmtTime().minusMinutes(5);
+        LocalDateTime endTime = statement.getStmtTime().plusMinutes(5);
+        
+        // 金额容差：0.1元
+        BigDecimal amountTolerance = new BigDecimal("0.1");
+        
+        // 优先通过订单号匹配
+        if (statement.getOutTradeNo() != null && !statement.getOutTradeNo().isEmpty()) {
+            return statementRepository.findMatchingStatements(
+                    statement.getUserId(),
+                    statement.getOutTradeNo(),
+                    statement.getAmount(),
+                    startTime,
+                    endTime,
+                    statement.getPlatformCode(),
+                    10
+            );
+        }
+        
+        // 如果没有订单号，通过金额和时间匹配
+        return statementRepository.findMatchingStatements(
+                statement.getUserId(),
+                null,
+                statement.getAmount(),
+                startTime,
+                endTime,
+                statement.getPlatformCode(),
+                10
+        );
+    }
+
+    /**
+     * 从账单的原始数据中提取商户订单号
+     */
+    private String extractMerchantOrderNo(FinStatement statement) {
+        // 这里可以从 raw_data JSON 中提取商户订单号
+        // 不同平台的字段名可能不同，需要根据实际情况解析
+        // 暂时返回 null，后续可以根据需要增强
+        return null;
+    }
+
+    /**
+     * 查找或创建交易（用于多条账单归并到一笔交易）
+     */
+    private Mono<FinTransactionStatementMapDto> findOrCreateTransactionForStatements(
+            FinStatement currentStatement, List<FinStatement> matchingStatements) {
+        // 查找这些账单是否已经关联到交易
+        return Flux.fromIterable(matchingStatements)
+                .flatMap(stmt -> transactionStatementMapRepository.findByStatementId(stmt.getId()))
+                .collectList()
+                .flatMap(existingMaps -> {
+                    if (existingMaps.isEmpty()) {
+                        // 都没有关联交易，创建新交易并关联所有账单
+                        List<Long> statementIds = new java.util.ArrayList<>();
+                        statementIds.add(currentStatement.getId());
+                        matchingStatements.forEach(stmt -> {
+                            if (!stmt.getId().equals(currentStatement.getId())) {
+                                statementIds.add(stmt.getId());
+                            }
+                        });
+                        return createTransactionFromStatements(statementIds, null)
+                                .flatMap(tx -> transactionStatementMapRepository.findByTransactionIdAndStatementId(tx.getId(), currentStatement.getId()))
+                                .map(transactionStatementMapMapper::toDto);
+                    } else {
+                        // 已有交易，关联当前账单到第一个找到的交易
+                        Long transactionId = existingMaps.get(0).getTransactionId();
+                        return manualMergeStatementToTransaction(currentStatement.getId(), transactionId, MapType.MANY_TO_ONE.getCode());
+                    }
+                });
     }
 
     /**

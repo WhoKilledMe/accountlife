@@ -6,6 +6,7 @@ import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.enums.fin.FlowDirection;
 import com.acco.life.enums.fin.StatementStatus;
+import com.acco.life.util.CsvUtil;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -51,15 +52,20 @@ public class MeituanFinStatementParser implements FinStatementCsvParser {
 
     @Override
     public List<? extends FileTransactionDto> parse(InputStream inputStream) throws Exception {
+        // 美团账单前19行为元数据，需要跳过
+        // 第20行为表头，第21行开始是数据
+        InputStream skippedStream = CsvUtil.skipLines(inputStream, 19);
+        
         CsvSchema schema = csvMapper.schemaFor(FileTransactionMeituan.class).withHeader();
         MappingIterator<FileTransactionMeituan> it = csvMapper.readerFor(FileTransactionMeituan.class)
                 .with(schema)
-                .readValues(inputStream);
+                .readValues(skippedStream);
         return it.readAll();
     }
 
     @Override
-    public List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId) {
+    public List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId,
+                                              com.acco.life.service.AiTransactionCategoryService categoryService) {
         List<FinStatement> statements = new ArrayList<>();
         
         for (FileTransactionDto dto : dtos) {
@@ -74,28 +80,50 @@ public class MeituanFinStatementParser implements FinStatementCsvParser {
                 stmt.setPlatformCode(getPlatformCode());
                 stmt.setSourceType("PLATFORM_ORDER");
                 
-                // 设置订单号
-                stmt.setOutTradeNo(mt.getOrderId());
+                // 设置订单号 - 使用交易单号
+                stmt.setOutTradeNo(mt.getTradeNo());
                 
                 // 计算行级 Hash
-                String rawContent = mt.getOrderId() + mt.getOrderTime() + mt.getPayAmount();
+                String tradeNo = mt.getTradeNo() != null ? mt.getTradeNo() : "";
+                String successTime = mt.getSuccessTime() != null ? mt.getSuccessTime() : "";
+                String paidAmount = mt.getPaidAmount() != null ? mt.getPaidAmount() : "";
+                String rawContent = tradeNo + successTime + paidAmount;
                 String rowHash = DigestUtils.md5DigestAsHex((fileId + rawContent).getBytes(StandardCharsets.UTF_8));
                 stmt.setRawRowHash(rowHash);
                 
                 // 存储原始 JSON
                 stmt.setRawData(objectMapper.writeValueAsString(mt));
                 
-                // 解析时间
-                stmt.setStmtTime(parseDateTime(mt.getOrderTime()));
+                // 解析时间 - 优先使用成功时间，如果没有则使用创建时间
+                String timeStr = mt.getSuccessTime() != null ? mt.getSuccessTime() : mt.getCreatedTime();
+                stmt.setStmtTime(parseDateTime(timeStr));
                 
-                // 解析金额
-                BigDecimal amount = parseAmount(mt.getPayAmount());
+                // 解析金额 - 使用实付金额
+                BigDecimal amount = parseAmount(mt.getPaidAmount());
                 stmt.setAmount(amount.abs());
                 stmt.setDirection(FlowDirection.OUT.getCode()); // 美团消费都是支出
                 
-                // 设置商户信息
-                stmt.setCounterparty(mt.getMerchantName());
+                // 设置商户信息 - 从订单标题或备注中提取
+                stmt.setCounterparty(extractMerchantName(mt));
                 stmt.setDescription(buildDescription(mt));
+                
+                // AI分类推断
+                if (categoryService != null) {
+                    try {
+                        String description = stmt.getDescription() != null ? stmt.getDescription() : "";
+                        String amountStr = mt.getPaidAmount() != null ? mt.getPaidAmount() : "0";
+                        // 美团都是支出，金额取负值
+                        amountStr = "-" + amountStr.replaceAll("[¥￥,，]", "").trim();
+                        
+                        var category = categoryService.inferTransactionCategory(description, amountStr, userId).block();
+                        if (category != null && category.getId() != null) {
+                            stmt.setCategoryId(category.getId());
+                            log.debug("美团账单分类推断成功: {} -> {}", description, category.getName());
+                        }
+                    } catch (Exception e) {
+                        log.warn("美团账单分类推断失败: {}", stmt.getDescription(), e);
+                    }
+                }
                 
                 // 设置解析器信息
                 stmt.setParserVersion(getParserVersion());
@@ -142,13 +170,24 @@ public class MeituanFinStatementParser implements FinStatementCsvParser {
         }
     }
 
+    private String extractMerchantName(FileTransactionMeituan mt) {
+        // 从订单标题中提取商户名，如果没有则返回null
+        if (mt.getOrderTitle() != null && !mt.getOrderTitle().isEmpty()) {
+            return mt.getOrderTitle();
+        }
+        return null;
+    }
+
     private String buildDescription(FileTransactionMeituan mt) {
         StringBuilder sb = new StringBuilder();
-        if (mt.getMerchantName() != null) {
-            sb.append(mt.getMerchantName());
+        if (mt.getOrderTitle() != null) {
+            sb.append(mt.getOrderTitle());
         }
-        if (mt.getOrderType() != null) {
-            sb.append(" - ").append(mt.getOrderType());
+        if (mt.getTransactionType() != null) {
+            sb.append(" - ").append(mt.getTransactionType());
+        }
+        if (mt.getRemark() != null && !mt.getRemark().isEmpty()) {
+            sb.append(" (").append(mt.getRemark()).append(")");
         }
         return sb.toString();
     }

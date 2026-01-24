@@ -6,6 +6,7 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -45,6 +46,25 @@ public interface FinStatementRepository extends ReactiveCrudRepository<FinStatem
      * 根据平台订单号查询
      */
     Mono<FinStatement> findByOutTradeNo(String outTradeNo);
+
+    /**
+     * 根据用户ID、订单号、金额和时间范围查找匹配的账单（用于跨平台对账）
+     */
+    @Query("""
+        SELECT * FROM fin_statement 
+        WHERE user_id = :userId 
+          AND (:orderNo IS NULL OR out_trade_no = :orderNo OR out_trade_no LIKE CONCAT('%', :orderNo, '%'))
+          AND (:amount IS NULL OR ABS(amount - :amount) <= 0.1)
+          AND (:startTime IS NULL OR stmt_time >= :startTime)
+          AND (:endTime IS NULL OR stmt_time <= :endTime)
+          AND (:excludePlatform IS NULL OR platform_code != :excludePlatform)
+          AND status IN ('PARSED', 'MAPPED')
+        ORDER BY stmt_time DESC
+        LIMIT :limit
+    """)
+    Flux<FinStatement> findMatchingStatements(Long userId, String orderNo, BigDecimal amount, 
+                                               LocalDateTime startTime, LocalDateTime endTime, 
+                                               String excludePlatform, int limit);
 
     /**
      * 根据用户ID和时间范围查询

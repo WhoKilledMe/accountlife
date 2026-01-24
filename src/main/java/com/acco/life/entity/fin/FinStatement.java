@@ -105,6 +105,12 @@ public class FinStatement {
     private String description;
 
     /**
+     * 交易分类ID（关联 transaction_category）
+     */
+    @Column("category_id")
+    private Long categoryId;
+
+    /**
      * 解析器版本号（便于重解析）
      */
     @Column("parser_version")

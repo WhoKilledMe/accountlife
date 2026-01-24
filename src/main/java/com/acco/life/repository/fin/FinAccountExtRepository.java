@@ -5,6 +5,8 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
+
 /**
  * 账户扩展表 Repository
  *
@@ -21,7 +23,7 @@ public interface FinAccountExtRepository extends ReactiveCrudRepository<FinAccou
     /**
      * 根据账户ID列表查询扩展信息
      */
-    Flux<FinAccountExt> findByAccountIdIn(Iterable<Long> accountIds);
+    Flux<FinAccountExt> findByAccountIdIn(Collection<Long> accountIds);
 
     /**
      * 根据账户ID删除扩展信息

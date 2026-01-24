@@ -3,6 +3,7 @@ package com.acco.life.service.csv;
 import com.acco.life.dto.FileTransactionDto;
 import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.enums.TransactionSourceType;
+import com.acco.life.service.AiTransactionCategoryService;
 
 import java.io.InputStream;
 import java.util.List;
@@ -38,11 +39,13 @@ public interface FinStatementCsvParser {
 
     /**
      * 将解析得到的 DTO 列表转换为 FinStatement 实体列表
-     *
+     * 
      * @param dtos 解析后的 DTO 列表
      * @param userId 用户ID
      * @param fileId 文件ID
+     * @param categoryService AI分类服务（可选，如果为null则不进行分类）
      * @return FinStatement 实体列表
      */
-    List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId);
+    List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId, 
+                                      AiTransactionCategoryService categoryService);
 }

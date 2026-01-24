@@ -28,6 +28,7 @@ public class FinStatementDto {
     private String counterparty;
     private String accountRef;
     private String description;
+    private Long categoryId;
     private String parserVersion;
     private Integer retryCount;
     private LocalDateTime parsedAt;

@@ -6,6 +6,7 @@ import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.enums.fin.FlowDirection;
 import com.acco.life.enums.fin.StatementStatus;
+import com.acco.life.service.AiTransactionCategoryService;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -59,7 +60,8 @@ public class NingboFinStatementParser implements FinStatementCsvParser {
     }
 
     @Override
-    public List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId) {
+    public List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId,
+                                              AiTransactionCategoryService categoryService) {
         List<FinStatement> statements = new ArrayList<>();
         
         for (FileTransactionDto dto : dtos) {
@@ -75,15 +77,17 @@ public class NingboFinStatementParser implements FinStatementCsvParser {
                 stmt.setSourceType("CREDIT_CARD_STATEMENT");
                 
                 // 计算行级 Hash
-                String rawContent = nb.getTransactionTime() + nb.getTransactionAmount() + nb.getTransactionSummary();
+                String transactionDate = nb.getTransactionDate() != null ? nb.getTransactionDate() : "";
+                String rawContent = transactionDate + nb.getTransactionAmount() + nb.getTransactionSummary();
                 String rowHash = DigestUtils.md5DigestAsHex((fileId + rawContent).getBytes(StandardCharsets.UTF_8));
                 stmt.setRawRowHash(rowHash);
                 
                 // 存储原始 JSON
                 stmt.setRawData(objectMapper.writeValueAsString(nb));
                 
-                // 解析时间
-                stmt.setStmtTime(parseDateTime(nb.getTransactionTime()));
+                // 解析时间 - 优先使用交易日期，如果没有则使用记账日期
+                String dateStr = nb.getTransactionDate() != null ? nb.getTransactionDate() : nb.getAccountingDate();
+                stmt.setStmtTime(parseDateTime(dateStr));
                 
                 // 解析金额和方向
                 BigDecimal amount = parseAmount(nb.getTransactionAmount());
@@ -94,8 +98,24 @@ public class NingboFinStatementParser implements FinStatementCsvParser {
                 stmt.setDescription(nb.getTransactionSummary());
                 stmt.setCounterparty(extractCounterparty(nb.getTransactionSummary()));
                 
-                // 设置账户引用（卡号尾号等）
-                stmt.setAccountRef(nb.getCardNumber());
+                // 设置账户引用（卡号尾号等）- 从摘要中提取或设为null
+                stmt.setAccountRef(null);
+                
+                // AI分类推断
+                if (categoryService != null) {
+                    try {
+                        String description = nb.getTransactionSummary() != null ? nb.getTransactionSummary() : "";
+                        String amountStr = nb.getTransactionAmount() != null ? nb.getTransactionAmount() : "0";
+                        
+                        var category = categoryService.inferTransactionCategory(description, amountStr, userId).block();
+                        if (category != null && category.getId() != null) {
+                            stmt.setCategoryId(category.getId());
+                            log.debug("宁波银行账单分类推断成功: {} -> {}", description, category.getName());
+                        }
+                    } catch (Exception e) {
+                        log.warn("宁波银行账单分类推断失败: {}", nb.getTransactionSummary(), e);
+                    }
+                }
                 
                 // 设置解析器信息
                 stmt.setParserVersion(getParserVersion());

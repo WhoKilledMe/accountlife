@@ -6,6 +6,7 @@ import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.enums.fin.FlowDirection;
 import com.acco.life.enums.fin.StatementStatus;
+import com.acco.life.service.AiTransactionCategoryService;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -59,7 +60,8 @@ public class LabelDetailFinStatementParser implements FinStatementCsvParser {
     }
 
     @Override
-    public List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId) {
+    public List<FinStatement> buildStatements(List<? extends FileTransactionDto> dtos, Long userId, Long fileId,
+                                              AiTransactionCategoryService categoryService) {
         List<FinStatement> statements = new ArrayList<>();
         
         for (FileTransactionDto dto : dtos) {
@@ -75,30 +77,48 @@ public class LabelDetailFinStatementParser implements FinStatementCsvParser {
                 stmt.setSourceType("BANK_STATEMENT");
                 
                 // 计算行级 Hash
-                String rawContent = ld.getTransactionTime() + ld.getTransactionAmount() + ld.getTransactionSummary();
+                String transactionDate = ld.getTransactionDate() != null ? ld.getTransactionDate() : "";
+                String rawContent = transactionDate + ld.getTransactionAmount() + ld.getTransactionSummary();
                 String rowHash = DigestUtils.md5DigestAsHex((fileId + rawContent).getBytes(StandardCharsets.UTF_8));
                 stmt.setRawRowHash(rowHash);
                 
                 // 存储原始 JSON
                 stmt.setRawData(objectMapper.writeValueAsString(ld));
                 
-                // 解析时间
-                stmt.setStmtTime(parseDateTime(ld.getTransactionTime()));
+                // 解析时间 - 优先使用交易日期，如果没有则使用记账日期
+                String dateStr = ld.getTransactionDate() != null ? ld.getTransactionDate() : ld.getAccountingDate();
+                stmt.setStmtTime(parseDateTime(dateStr));
                 
                 // 解析金额和方向
                 BigDecimal amount = parseAmount(ld.getTransactionAmount());
                 stmt.setAmount(amount.abs());
                 
-                // 根据交易类型判断方向
-                String direction = determineDirection(ld.getTransactionType(), amount);
+                // 根据金额正负判断方向（LabelDetail格式：正数表示收入，负数表示支出）
+                String direction = amount.compareTo(BigDecimal.ZERO) >= 0 ? FlowDirection.IN.getCode() : FlowDirection.OUT.getCode();
                 stmt.setDirection(direction);
                 
                 // 设置摘要信息
                 stmt.setDescription(ld.getTransactionSummary());
-                stmt.setCounterparty(ld.getCounterparty());
+                stmt.setCounterparty(extractCounterparty(ld.getTransactionSummary()));
                 
-                // 设置账户引用
-                stmt.setAccountRef(ld.getAccountNumber());
+                // 设置账户引用 - LabelDetail没有账户号字段
+                stmt.setAccountRef(null);
+                
+                // AI分类推断
+                if (categoryService != null) {
+                    try {
+                        String description = ld.getTransactionSummary() != null ? ld.getTransactionSummary() : "";
+                        String amountStr = ld.getTransactionAmount() != null ? ld.getTransactionAmount() : "0";
+                        
+                        var category = categoryService.inferTransactionCategory(description, amountStr, userId).block();
+                        if (category != null && category.getId() != null) {
+                            stmt.setCategoryId(category.getId());
+                            log.debug("LabelDetail账单分类推断成功: {} -> {}", description, category.getName());
+                        }
+                    } catch (Exception e) {
+                        log.warn("LabelDetail账单分类推断失败: {}", ld.getTransactionSummary(), e);
+                    }
+                }
                 
                 // 设置解析器信息
                 stmt.setParserVersion(getParserVersion());
@@ -145,17 +165,11 @@ public class LabelDetailFinStatementParser implements FinStatementCsvParser {
         }
     }
 
-    private String determineDirection(String transactionType, BigDecimal amount) {
-        if (transactionType != null) {
-            String type = transactionType.toLowerCase();
-            if (type.contains("收入") || type.contains("入账") || type.contains("转入")) {
-                return FlowDirection.IN.getCode();
-            }
-            if (type.contains("支出") || type.contains("消费") || type.contains("转出")) {
-                return FlowDirection.OUT.getCode();
-            }
+    private String extractCounterparty(String summary) {
+        if (summary == null || summary.isEmpty()) {
+            return null;
         }
-        // 根据金额正负判断
-        return amount.compareTo(BigDecimal.ZERO) >= 0 ? FlowDirection.OUT.getCode() : FlowDirection.IN.getCode();
+        // 简单提取：取前20个字符作为对手方
+        return summary.length() > 20 ? summary.substring(0, 20) : summary;
     }
 }
