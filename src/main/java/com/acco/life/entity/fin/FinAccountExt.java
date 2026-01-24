@@ -1,11 +1,10 @@
 package com.acco.life.entity.fin;
 
+import com.acco.life.entity.BaseColumnEntity;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
 
 /**
  * 账户扩展信息实体类
@@ -14,16 +13,10 @@ import java.time.LocalDateTime;
  * @author wensen.zhang
  * @version V2.0.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Table("fin_account_ext")
 @Data
-public class FinAccountExt {
-
-    /**
-     * 扩展ID
-     */
-    @Id
-    @Column("id")
-    private Long id;
+public class FinAccountExt extends BaseColumnEntity {
 
     /**
      * fin_account.id
@@ -37,16 +30,4 @@ public class FinAccountExt {
      */
     @Column("json_ext")
     private String jsonExt;
-
-    /**
-     * 创建时间
-     */
-    @Column("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @Column("updated_at")
-    private LocalDateTime updatedAt;
 }

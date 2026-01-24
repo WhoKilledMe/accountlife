@@ -1,7 +1,8 @@
 package com.acco.life.entity.fin;
 
+import com.acco.life.entity.BaseColumnEntity;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -14,16 +15,10 @@ import java.time.LocalDateTime;
  * @author wensen.zhang
  * @version V2.0.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Table("fin_statement_file")
 @Data
-public class FinStatementFile {
-
-    /**
-     * 文件导入记录ID
-     */
-    @Id
-    @Column("id")
-    private Long id;
+public class FinStatementFile extends BaseColumnEntity {
 
     /**
      * 所属用户（可为空表示系统/公共文件）
@@ -102,22 +97,4 @@ public class FinStatementFile {
      */
     @Column("error_log")
     private String errorLog;
-
-    /**
-     * 创建人
-     */
-    @Column("created_by")
-    private String createdBy;
-
-    /**
-     * 创建时间
-     */
-    @Column("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @Column("updated_at")
-    private LocalDateTime updatedAt;
 }

@@ -259,9 +259,9 @@ public class FinReconciliationServiceImpl implements FinReconciliationService {
                 .flatMap(matchingStatements -> {
                     if (matchingStatements.isEmpty()) {
                         // 没有匹配的账单，创建新交易
-                        return createTransactionFromStatement(statement.getId())
-                                .flatMap(tx -> transactionStatementMapRepository.findByTransactionIdAndStatementId(tx.getId(), statement.getId()))
-                                .map(transactionStatementMapMapper::toDto);
+        return createTransactionFromStatement(statement.getId())
+                .flatMap(tx -> transactionStatementMapRepository.findByTransactionIdAndStatementId(tx.getId(), statement.getId()))
+                .map(transactionStatementMapMapper::toDto);
                     } else {
                         // 找到匹配的账单，检查是否已有交易
                         return findOrCreateTransactionForStatements(statement, matchingStatements);

@@ -8,6 +8,7 @@
 -- --------------------------------------------
 -- 1. 账户主表：描述资金容器
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_account;
 CREATE TABLE IF NOT EXISTS fin_account (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '账户ID（主键）',
     user_id BIGINT NOT NULL COMMENT '所属用户ID（系统用户表 fk）',
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS fin_account (
 -- --------------------------------------------
 -- 1.1. 平台字典表：统一管理平台信息
 -- --------------------------------------------
-drop table if exists fin_platform;
+DROP TABLE IF EXISTS fin_platform;
 CREATE TABLE IF NOT EXISTS fin_platform (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '平台ID（主键）',
     platform_code VARCHAR(64) NOT NULL UNIQUE COMMENT '平台唯一编码：WECHAT/ALIPAY/MEITUAN/CMB/ICBC/CCB/NINGBO/TIKTOK/TONGHUASHUN 等',
@@ -71,12 +72,16 @@ CREATE TABLE IF NOT EXISTS fin_platform (
 -- --------------------------------------------
 -- 2. 账户扩展表：机构特有字段
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_account_ext;
 CREATE TABLE IF NOT EXISTS fin_account_ext (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '扩展ID',
     account_id BIGINT NOT NULL COMMENT 'fin_account.id',
     json_ext JSON COMMENT '银行/券商等扩展信息（卡号掩码、账单日、开户行、授信额度等）',
+    created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     INDEX idx_account_id (account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账户扩展信息，按 account_id 一对一或一对多存放';
 
@@ -84,13 +89,18 @@ CREATE TABLE IF NOT EXISTS fin_account_ext (
 -- --------------------------------------------
 -- 3. 账户余额快照表：用于历史/报表
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_account_balance_snapshot;
 CREATE TABLE IF NOT EXISTS fin_account_balance_snapshot (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '快照ID',
     account_id BIGINT NOT NULL COMMENT 'fin_account.id',
     snapshot_date DATE NOT NULL COMMENT '快照日期（按日）',
     balance DECIMAL(18,2) NOT NULL COMMENT '当天结束时的余额快照',
     currency VARCHAR(10) DEFAULT 'CNY' COMMENT '币种',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '记录时间',
+    created_by VARCHAR(64) COMMENT '创建人',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     UNIQUE KEY uk_account_snapshot (account_id, snapshot_date),
     INDEX idx_snapshot_date (snapshot_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账户日度余额快照表，用于报表/性能优化';
@@ -99,6 +109,7 @@ CREATE TABLE IF NOT EXISTS fin_account_balance_snapshot (
 -- --------------------------------------------
 -- 4. 支付方式表：抽象支付能力
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_payment_method;
 CREATE TABLE IF NOT EXISTS fin_payment_method (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '支付方式ID',
     payment_code VARCHAR(64) NOT NULL UNIQUE COMMENT '支付方式代码（WECHAT_PAY/ALIPAY_PAY/BANK_DEBIT/CREDIT_PAY/MEITUAN_MONTH）',
@@ -107,8 +118,11 @@ CREATE TABLE IF NOT EXISTS fin_payment_method (
     platform_code VARCHAR(64) COMMENT '归属平台：WECHAT/ALIPAY/MEITUAN/TIKTOK/NINGBO_BANK/xxx',
     status VARCHAR(16) DEFAULT 'ACTIVE' COMMENT '状态：ACTIVE/INACTIVE',
     remark VARCHAR(255) COMMENT '备注',
+    created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     INDEX idx_platform_code (platform_code),
     INDEX idx_payment_type (payment_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付方式能力表（抽象支付通道/能力）';
@@ -117,22 +131,26 @@ CREATE TABLE IF NOT EXISTS fin_payment_method (
 -- --------------------------------------------
 -- 5. 支付方式与账户绑定表
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_payment_binding;
 CREATE TABLE IF NOT EXISTS fin_payment_binding (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '绑定ID',
     payment_method_id BIGINT NOT NULL COMMENT 'fin_payment_method.id',
     account_id BIGINT NOT NULL COMMENT 'fin_account.id',
     priority INT DEFAULT 0 COMMENT '路由优先级，数值越大优先',
     enabled TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     UNIQUE KEY uk_payment_account (payment_method_id, account_id),
     INDEX idx_account_id (account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付能力与具体账户的绑定关系（路由表）';
 
-drop table fin_transaction;
 -- --------------------------------------------
 -- 6. 交易中枢表：业务事实
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_transaction;
 CREATE TABLE IF NOT EXISTS fin_transaction (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '交易ID（业务中枢）',
     user_id BIGINT NOT NULL COMMENT '所属用户',
@@ -164,6 +182,7 @@ CREATE TABLE IF NOT EXISTS fin_transaction (
 -- --------------------------------------------
 -- 7. 账单文件导入日志
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_statement_file;
 CREATE TABLE IF NOT EXISTS fin_statement_file (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '文件导入记录ID',
     user_id BIGINT COMMENT '所属用户（可为空表示系统/公共文件）',
@@ -181,7 +200,9 @@ CREATE TABLE IF NOT EXISTS fin_statement_file (
     error_log TEXT COMMENT '解析错误日志（如解析失败原因）',
     created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     INDEX idx_user_id (user_id),
     INDEX idx_platform_code (platform_code),
     INDEX idx_status (status),
@@ -192,6 +213,7 @@ CREATE TABLE IF NOT EXISTS fin_statement_file (
 -- --------------------------------------------
 -- 8. 账单行表：原始行证据
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_statement;
 CREATE TABLE IF NOT EXISTS fin_statement (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '账单行ID',
     file_id BIGINT NOT NULL COMMENT 'fin_statement_file.id',
@@ -212,8 +234,11 @@ CREATE TABLE IF NOT EXISTS fin_statement (
     retry_count INT DEFAULT 0 COMMENT '重试次数',
     parsed_at DATETIME COMMENT '解析完成时间',
     status VARCHAR(16) DEFAULT 'NEW' COMMENT 'NEW/PARSED/MAPPED/IGNORED',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '导入时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    created_by VARCHAR(64) COMMENT '创建人',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     UNIQUE KEY uk_file_row (file_id, raw_row_hash),
     INDEX idx_user_platform_time (user_id, platform_code, stmt_time),
     INDEX idx_out_trade_no (out_trade_no),
@@ -224,6 +249,7 @@ CREATE TABLE IF NOT EXISTS fin_statement (
 -- --------------------------------------------
 -- 9. 账单到账户映射表
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_statement_account_map;
 CREATE TABLE IF NOT EXISTS fin_statement_account_map (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '映射ID',
     statement_id BIGINT NOT NULL COMMENT 'fin_statement.id',
@@ -233,6 +259,11 @@ CREATE TABLE IF NOT EXISTS fin_statement_account_map (
     mapped_by VARCHAR(64) COMMENT '映射操作人/系统标识',
     mapped_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '映射时间',
     remark VARCHAR(255) COMMENT '备注',
+    created_by VARCHAR(64) COMMENT '创建人',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     UNIQUE KEY uk_stmt_account (statement_id, account_id),
     INDEX idx_account_id (account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单到账户的映射表（用于确定哪条账单属于哪个账户）';
@@ -241,6 +272,7 @@ CREATE TABLE IF NOT EXISTS fin_statement_account_map (
 -- --------------------------------------------
 -- 10. 交易与账单映射表
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_transaction_statement_map;
 CREATE TABLE IF NOT EXISTS fin_transaction_statement_map (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '交易-账单映射ID',
     transaction_id BIGINT NOT NULL COMMENT 'fin_transaction.id',
@@ -252,6 +284,11 @@ CREATE TABLE IF NOT EXISTS fin_transaction_statement_map (
     match_rule VARCHAR(64) COMMENT '匹配规则标识（便于问题排查）',
     match_detail JSON COMMENT '匹配详情（时间差、金额差等）',
     mapped_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '映射时间',
+    created_by VARCHAR(64) COMMENT '创建人',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     UNIQUE KEY uk_tx_stmt (transaction_id, statement_id),
     INDEX idx_statement_id (statement_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='交易与账单的映射，支持分期/合单/人工修正';
@@ -260,6 +297,7 @@ CREATE TABLE IF NOT EXISTS fin_transaction_statement_map (
 -- --------------------------------------------
 -- 11. 支付拆分表（支付路由）
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_payment_route;
 CREATE TABLE IF NOT EXISTS fin_payment_route (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '支付路由ID',
     transaction_id BIGINT NOT NULL COMMENT 'fin_transaction.id',
@@ -269,8 +307,11 @@ CREATE TABLE IF NOT EXISTS fin_payment_route (
     amount DECIMAL(18,2) NOT NULL COMMENT '拆分金额',
     route_order INT DEFAULT 1 COMMENT '拆分顺序（展示和执行顺序）',
     route_type VARCHAR(32) COMMENT 'NORMAL/SUBSIDY/FEE/SPLIT',
+    created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     INDEX idx_transaction_id (transaction_id),
     INDEX idx_from_account (from_account_id),
     INDEX idx_to_account (to_account_id)
@@ -280,6 +321,7 @@ CREATE TABLE IF NOT EXISTS fin_payment_route (
 -- --------------------------------------------
 -- 12. 清算流水表（金融级清算）
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_clearing_flow;
 CREATE TABLE IF NOT EXISTS fin_clearing_flow (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '清算流水ID',
     user_id BIGINT NOT NULL COMMENT '所属用户',
@@ -292,8 +334,11 @@ CREATE TABLE IF NOT EXISTS fin_clearing_flow (
     status VARCHAR(32) DEFAULT 'INIT' COMMENT 'INIT/CLEARING/SUCCESS/FAILED',
     trade_time DATETIME NOT NULL COMMENT '清算时间或发生时间',
     remark VARCHAR(255) COMMENT '备注',
+    created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     INDEX idx_user_id (user_id),
     INDEX idx_transaction_id (transaction_id),
     INDEX idx_from_account (from_account_id),
@@ -304,6 +349,7 @@ CREATE TABLE IF NOT EXISTS fin_clearing_flow (
 -- --------------------------------------------
 -- 13. 总账流水表（会计分录级别）
 -- --------------------------------------------
+DROP TABLE IF EXISTS fin_account_flow;
 CREATE TABLE IF NOT EXISTS fin_account_flow (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '会计流水ID',
     user_id BIGINT NOT NULL COMMENT '所属用户',
@@ -318,8 +364,11 @@ CREATE TABLE IF NOT EXISTS fin_account_flow (
     biz_type VARCHAR(32) COMMENT '业务类型，复制自 fin_transaction.biz_type 便于查询',
     trade_time DATETIME NOT NULL COMMENT '发生时间（用于排序/回溯）',
     remark VARCHAR(255) COMMENT '备注',
+    created_by VARCHAR(64) COMMENT '创建人',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     INDEX idx_user_id (user_id),
     INDEX idx_account_time (account_id, trade_time),
     INDEX idx_transaction_id (transaction_id),

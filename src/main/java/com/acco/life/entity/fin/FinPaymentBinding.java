@@ -1,11 +1,10 @@
 package com.acco.life.entity.fin;
 
+import com.acco.life.entity.BaseColumnEntity;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
 
 /**
  * 支付能力与具体账户的绑定关系实体类
@@ -14,16 +13,10 @@ import java.time.LocalDateTime;
  * @author wensen.zhang
  * @version V2.0.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Table("fin_payment_binding")
 @Data
-public class FinPaymentBinding {
-
-    /**
-     * 绑定ID
-     */
-    @Id
-    @Column("id")
-    private Long id;
+public class FinPaymentBinding extends BaseColumnEntity {
 
     /**
      * fin_payment_method.id
@@ -48,16 +41,4 @@ public class FinPaymentBinding {
      */
     @Column("enabled")
     private Boolean enabled;
-
-    /**
-     * 创建时间
-     */
-    @Column("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @Column("updated_at")
-    private LocalDateTime updatedAt;
 }

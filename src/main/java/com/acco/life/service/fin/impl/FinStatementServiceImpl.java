@@ -60,6 +60,10 @@ public class FinStatementServiceImpl implements FinStatementService {
                     fileRecord.setSuccessCount(0);
                     fileRecord.setFailureCount(0);
                     fileRecord.setUploadedAt(LocalDateTime.now());
+                    // is_deleted 由 AuditFieldCallback 自动设置
+                    if (fileRecord.getIsDeleted() == null) {
+                        fileRecord.setIsDeleted(0);
+                    }
                     
                     return statementFileRepository.save(fileRecord)
                             .map(statementFileMapper::toDto);

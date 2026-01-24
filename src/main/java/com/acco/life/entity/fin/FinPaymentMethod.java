@@ -1,11 +1,10 @@
 package com.acco.life.entity.fin;
 
+import com.acco.life.entity.BaseColumnEntity;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
 
 /**
  * 支付方式能力表实体类
@@ -14,16 +13,10 @@ import java.time.LocalDateTime;
  * @author wensen.zhang
  * @version V2.0.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Table("fin_payment_method")
 @Data
-public class FinPaymentMethod {
-
-    /**
-     * 支付方式ID
-     */
-    @Id
-    @Column("id")
-    private Long id;
+public class FinPaymentMethod extends BaseColumnEntity {
 
     /**
      * 支付方式代码（WECHAT_PAY/ALIPAY_PAY/BANK_DEBIT/CREDIT_PAY/MEITUAN_MONTH）
@@ -60,16 +53,4 @@ public class FinPaymentMethod {
      */
     @Column("remark")
     private String remark;
-
-    /**
-     * 创建时间
-     */
-    @Column("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @Column("updated_at")
-    private LocalDateTime updatedAt;
 }

@@ -1,13 +1,13 @@
 package com.acco.life.entity.fin;
 
+import com.acco.life.entity.BaseColumnEntity;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 账户日度余额快照实体类
@@ -16,16 +16,10 @@ import java.time.LocalDateTime;
  * @author wensen.zhang
  * @version V2.0.0
  */
+@EqualsAndHashCode(callSuper = true)
 @Table("fin_account_balance_snapshot")
 @Data
-public class FinAccountBalanceSnapshot {
-
-    /**
-     * 快照ID
-     */
-    @Id
-    @Column("id")
-    private Long id;
+public class FinAccountBalanceSnapshot extends BaseColumnEntity {
 
     /**
      * fin_account.id
@@ -50,10 +44,4 @@ public class FinAccountBalanceSnapshot {
      */
     @Column("currency")
     private String currency;
-
-    /**
-     * 记录时间
-     */
-    @Column("created_at")
-    private LocalDateTime createdAt;
 }
