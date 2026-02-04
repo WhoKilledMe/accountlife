@@ -122,7 +122,14 @@ public class UserLoginFilter implements WebFilter {
                                                 HttpHeaders headers = new HttpHeaders();
                                                 headers.putAll(super.getHeaders());
                                                 headers.setContentLength(newBody.length);
-                                                headers.setContentType(MediaType.APPLICATION_JSON);
+                                                // 保留原始Content-Type，只在原始请求是JSON类型时才设置为JSON
+                                                MediaType originalContentType = exchange.getRequest().getHeaders().getContentType();
+                                                if (originalContentType != null) {
+                                                    headers.setContentType(originalContentType);
+                                                } else {
+                                                    // 如果原始请求没有Content-Type，则设置为JSON
+                                                    headers.setContentType(MediaType.APPLICATION_JSON);
+                                                }
                                                 return headers;
                                             }
                                         };
@@ -148,8 +155,16 @@ public class UserLoginFilter implements WebFilter {
 
     private boolean shouldInjectUserId(ServerWebExchange exchange) {
         MediaType contentType = exchange.getRequest().getHeaders().getContentType();
+        // 如果没有Content-Type，我们需要检查是否是表单提交等可能包含数据的请求
         if (contentType == null) {
-            return false;
+            // 检查Content-Length头部，如果有内容长度，尝试处理
+            String contentLength = exchange.getRequest().getHeaders().getFirst("Content-Length");
+            if (contentLength == null || "0".equals(contentLength)) {
+                return false;
+            }
+            // 对于没有明确Content-Type但有内容的请求，也尝试处理
+            HttpMethod method = exchange.getRequest().getMethod();
+            return method == HttpMethod.POST || method == HttpMethod.PUT || method == HttpMethod.PATCH;
         }
         // 仅处理 application/json
         if (!MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {

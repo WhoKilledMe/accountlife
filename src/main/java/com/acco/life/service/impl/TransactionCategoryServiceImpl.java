@@ -7,10 +7,14 @@ import com.acco.life.service.TransactionCategoryService;
 import com.acco.life.exception.BusinessException;
 import com.acco.life.entity.TransactionCategory;
 import com.acco.life.common.PageResponse;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,14 +28,23 @@ import java.util.Map;
  * @author wensen.zhang
  * @version V1.0.0
  */
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransactionCategoryServiceImpl implements TransactionCategoryService {
 
     private final TransactionCategoryRepository repository;
-
     private final TransactionCategoryMapper mapper;
+
+    /**
+     * 交易分类缓存（使用Caffeine实现LRU淘汰）
+     * Key: categoryId
+     * Value: TransactionCategoryDto
+     */
+    private final Cache<Long, TransactionCategoryDto> categoryCache = Caffeine.newBuilder()
+            .maximumSize(1_000)  // 最多缓存1000个分类
+            .expireAfterWrite(Duration.ofHours(1))  // 1小时后过期
+            .build();
 
 
     @Override
@@ -43,9 +56,28 @@ public class TransactionCategoryServiceImpl implements TransactionCategoryServic
     }
 
     @Override
-    public Mono<TransactionCategoryDto> findById(Long  id) {
+    public Mono<TransactionCategoryDto> findById(Long id) {
+        if (id == null) {
+            return Mono.empty();
+        }
+
+        // 1. 先查询缓存
+        TransactionCategoryDto cached = categoryCache.getIfPresent(id);
+        if (cached != null) {
+            log.debug("命中缓存：分类ID: {}", id);
+            return Mono.just(cached);
+        }
+
+        // 2. 缓存未命中，查询数据库
         return repository.findById(id)
-        .map(mapper::toDto);
+                .map(mapper::toDto)
+                .doOnNext(dto -> {
+                    // 3. 将查询结果放入缓存
+                    if (dto != null) {
+                        categoryCache.put(id, dto);
+                        log.debug("缓存分类：ID: {}, 名称: {}", id, dto.getName());
+                    }
+                });
     }
 
     @Override
@@ -65,7 +97,14 @@ public class TransactionCategoryServiceImpl implements TransactionCategoryServic
                             return Mono.error(new BusinessException("系统分类禁止修改"));
                         }
                         TransactionCategory toSave = mapper.toEntity(incomingDto);
-                        return repository.save(toSave).map(mapper::toDto);
+                        return repository.save(toSave)
+                                .map(mapper::toDto)
+                                .doOnNext(savedDto -> {
+                                    // 更新缓存
+                                    if (savedDto != null && savedDto.getId() != null) {
+                                        categoryCache.put(savedDto.getId(), savedDto);
+                                    }
+                                });
                     });
         });
     }
@@ -78,7 +117,11 @@ public class TransactionCategoryServiceImpl implements TransactionCategoryServic
                     if (existing.getUserId() == null) {
                         return Mono.error(new BusinessException("系统分类禁止删除"));
                     }
-                    return repository.deleteById(id);
+                    return repository.deleteById(id)
+                            .doOnSuccess(v -> {
+                                // 删除缓存
+                                categoryCache.invalidate(id);
+                            });
                 });
     }
 

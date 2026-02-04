@@ -16,9 +16,23 @@ import java.util.List;
 public interface AiTransactionCategoryService {
     
     /**
-     * 推断交易分类
+     * 推断交易分类（新版：结合交易对方和描述）
+     * @param counterparty 交易对方（商户名称）
+     * @param description 交易描述
+     * @param amount 金额
+     * @param userId 用户ID
+     * @return 分类结果
      */
-    Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Long userId);
+    Mono<TransactionCategoryDto> inferTransactionCategory(String counterparty, String description, String amount, Long userId);
+    
+    /**
+     * 推断交易分类（旧版：仅用描述，保留兼容性）
+     * @deprecated 使用 {@link #inferTransactionCategory(String, String, String, Long)} 代替
+     */
+    @Deprecated
+    default Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Long userId) {
+        return inferTransactionCategory(null, transactionSummary, amount, userId);
+    }
     
     /**
      * 推断交易类型（基于金额）

@@ -8,6 +8,8 @@ import com.acco.life.enums.TransactionType;
 import com.acco.life.mapper.TransactionCategoryMapper;
 import com.acco.life.repository.TransactionCategoryRepository;
 import com.acco.life.service.AiTransactionCategoryService;
+import com.acco.life.service.CategoryKeywordMappingService;
+import com.acco.life.service.TransactionCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -27,17 +29,39 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AiTransactionCategoryServiceImpl implements AiTransactionCategoryService {
 
+    private final TransactionCategoryService transactionCategoryService;
     private final TransactionCategoryRepository transactionCategoryRepository;
     private final TransactionCategoryMapper transactionCategoryMapper;
+    private final CategoryKeywordMappingService categoryKeywordMappingService;
 
     @Override
-    public Mono<TransactionCategoryDto> inferTransactionCategory(String transactionSummary, String amount, Long userId) {
-        // 推断交易类型和分类类型
-        TransactionType transactionType = inferTransactionType(transactionSummary, amount);
-        CategoryType categoryType = inferCategoryType(transactionSummary, amount);
-        
-        // 查找或创建分类
-        return findOrCreateCategory(categoryType, userId);
+    public Mono<TransactionCategoryDto> inferTransactionCategory(String counterparty, String description, String amount, Long userId) {
+        // 组合 counterparty 和 description 进行匹配（counterparty优先，因为平台名更准确）
+        String combinedText = buildSearchText(counterparty, description);
+
+        // 1. 优先使用数据库中的关键词映射表，直接命中 transaction_category 表的 ID
+        return categoryKeywordMappingService.findCategoryIdByKeyword(combinedText, userId)
+                .flatMap(categoryId -> transactionCategoryService.findById(categoryId))
+                // 2. 若未命中任何关键词映射，则回退到枚举体系，按旧逻辑推断并按 name+type 在 transaction_category 中查找/创建
+                .switchIfEmpty(Mono.defer(() -> {
+                    CategoryType categoryType = inferCategoryType(combinedText, amount);
+                    return findOrCreateCategory(categoryType, userId);
+                }));
+    }
+    
+    /**
+     * 构建搜索文本：counterparty + description
+     * counterparty（交易对方）优先级更高，因为平台名称比交易描述更准确
+     */
+    private String buildSearchText(String counterparty, String description) {
+        StringBuilder sb = new StringBuilder();
+        if (counterparty != null && !counterparty.isBlank()) {
+            sb.append(counterparty).append(" ");
+        }
+        if (description != null && !description.isBlank()) {
+            sb.append(description);
+        }
+        return sb.toString().trim();
     }
 
     @Override
@@ -170,54 +194,4 @@ public class AiTransactionCategoryServiceImpl implements AiTransactionCategorySe
                 .map(transactionCategoryMapper::toDto);
     }
     
-    /**
-     * 测试新的交易类型系统
-     */
-    public void testNewTransactionTypes() {
-        System.out.println("=== 测试新的交易类型系统 ===");
-        
-        // 测试交易类型推断
-        String[] testSummaries = {
-            "工资发放", "餐饮消费", "转账到支付宝", "投资收益", "购物消费", "医疗费用"
-        };
-        
-        String[] testAmounts = {
-            "5000.00", "-100.00", "-1000.00", "200.00", "-500.00", "-200.00"
-        };
-        
-        for (int i = 0; i < testSummaries.length; i++) {
-            TransactionType transactionType = inferTransactionType(testSummaries[i], testAmounts[i]);
-            CategoryType categoryType = inferCategoryType(testSummaries[i], testAmounts[i]);
-            
-            System.out.printf("摘要: %s, 金额: %s\n", testSummaries[i], testAmounts[i]);
-            System.out.printf("推断交易类型: %s (%s)\n", transactionType.name, transactionType.name);
-            System.out.printf("推断分类类型: %s (%s)\n", categoryType.name, categoryType.name);
-            System.out.println("---");
-        }
-        
-        // 测试关键词映射
-        System.out.println("=== 测试关键词映射 ===");
-        String[] testKeywords = {"工资", "餐饮", "转账", "投资", "购物", "医疗"};
-        for (String keyword : testKeywords) {
-            CategoryType category = CategoryKeywordMapping.findCategoryByKeyword(keyword);
-            if (category != null) {
-                System.out.printf("关键词 '%s' -> 分类: %s\n", keyword, category.name);
-            } else {
-                System.out.printf("关键词 '%s' -> 未找到匹配分类\n", keyword);
-            }
-        }
-    }
-    
-    /**
-     * 主方法，用于测试整个系统
-     */
-    public static void main(String[] args) {
-        // 创建测试实例
-        AiTransactionCategoryServiceImpl testService = new AiTransactionCategoryServiceImpl(null, null);
-        
-        // 运行测试
-        testService.testNewTransactionTypes();
-        
-        System.out.println("\n=== 测试完成 ===");
-    }
-} 
+}

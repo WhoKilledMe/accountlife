@@ -240,9 +240,7 @@ CREATE TABLE IF NOT EXISTS fin_statement (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
     is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
     UNIQUE KEY uk_file_row (file_id, raw_row_hash),
-    INDEX idx_user_platform_time (user_id, platform_code, stmt_time),
-    INDEX idx_out_trade_no (out_trade_no),
-    INDEX idx_status (status)
+    INDEX idx_user_platform_time (user_id, platform_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单行表：保存每一行原始/解析后数据，作为证据';
 
 
@@ -377,219 +375,29 @@ CREATE TABLE IF NOT EXISTS fin_account_flow (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='总账流水（会计明细）：所有账户余额变动应通过该表记录（复式记账的边）';
 
 
--- ============================================
--- 测试数据：fin_account 账户数据
--- 参考 user_account 表数据创建
--- ============================================
-INSERT INTO `fin_account` (
-    `id`, `user_id`, `account_code`, `account_name`, `account_category`, `account_type`, 
-    `owner_type`, `platform_code`, `currency`, `balance`, `balance_updated_at`, 
-    `external_account_ref`, `is_virtual`, `status`, `remark`, 
-    `created_by`, `created_at`, `updated_by`, `updated_at`, `is_deleted`
-) VALUES
-    -- 工商银行储蓄卡
-    (1, 3, 'ACCT-3-1', '工商银行储蓄卡', 'CASH', 'BANK_CARD', 'USER', 'ICBC', 'CNY', 10000.00, 
-     '2025-09-03 10:09:47', NULL, 0, 'ACTIVE', '主要储蓄账户', 
-     'system', '2025-08-12 17:20:51', 'system', '2025-09-03 10:09:47', 0),
-    
-    -- 支付宝余额
-    (2, 3, 'ACCT-3-2', '支付宝余额', 'CASH', 'E_WALLET', 'USER', 'ALIPAY', 'CNY', 5000.00, 
-     '2025-09-03 10:09:47', NULL, 0, 'ACTIVE', '日常消费账户', 
-     'system', '2025-08-12 17:20:51', 'system', '2025-09-03 10:09:47', 0),
-    
-    -- 微信钱包
-    (3, 3, 'ACCT-3-3', '微信钱包', 'CASH', 'E_WALLET', 'USER', 'WECHAT', 'CNY', 2000.00, 
-     '2025-09-03 10:09:47', NULL, 0, 'ACTIVE', '零钱账户', 
-     'system', '2025-08-12 17:20:51', 'system', '2025-09-03 10:09:47', 0),
-    
-    -- 建设银行储蓄卡
-    (4, 3, 'ACCT-3-4', '建设银行储蓄卡', 'CASH', 'BANK_CARD', 'USER', 'CCB', 'CNY', 8000.00, 
-     '2025-09-03 10:09:47', NULL, 0, 'ACTIVE', '储蓄账户', 
-     'system', '2025-08-12 17:20:51', 'system', '2025-09-03 10:09:47', 0),
-    
-    -- 宁波信用卡
-    (5, 3, 'ACCT-3-5', '宁波信用卡', 'CASH', 'CREDIT', 'USER', 'NINGBO', 'CNY', 0.00, 
-     '2025-08-12 19:53:09', NULL, 0, 'ACTIVE', '信用卡', 
-     'system', '2025-08-12 19:53:09', 'system', '2025-08-12 19:53:09', 0);
+-- --------------------------------------------
+-- 14. 账单映射规则表：配置化字段映射
+-- --------------------------------------------
+DROP TABLE IF EXISTS fin_statement_mapping_rule;
+CREATE TABLE IF NOT EXISTS fin_statement_mapping_rule (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '映射规则ID（主键）',
+    platform_code VARCHAR(64) NOT NULL COMMENT '平台代码：WECHAT/ALIPAY/MEITUAN/JD/CMB/ABC 等',
+    source_type VARCHAR(32) NOT NULL COMMENT '来源字段类型：PAYMENT_METHOD/TRADE_CATEGORY/REMARK 等',
+    source_pattern VARCHAR(255) NOT NULL COMMENT '来源匹配模式：支持模糊匹配的关键字或模式（如 微信支付 / %京东白条%）',
+    target_type VARCHAR(32) NOT NULL COMMENT '目标类型：ACCOUNT_REF/PAYMENT_CODE/CATEGORY_ID 等',
+    target_value VARCHAR(128) NOT NULL COMMENT '目标值：如 WECHAT_PAY/JD_BAITIAO/具体categoryId等',
+    priority INT DEFAULT 0 COMMENT '匹配优先级，数值越大优先',
+    enabled TINYINT(1) DEFAULT 1 COMMENT '是否启用：1-启用，0-禁用',
+    remark VARCHAR(255) COMMENT '规则备注说明',
+    created_by VARCHAR(64) COMMENT '创建人',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_by VARCHAR(64) COMMENT '最近修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最近修改时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除（0-否，1-是）',
+    INDEX idx_platform_source (platform_code, source_type, enabled),
+    INDEX idx_target_type (target_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单映射规则表：用于配置化管理各平台账单字段到内部模型的映射规则';
 
-
--- ============================================
--- 测试数据：fin_platform 平台字典数据
--- ============================================
-INSERT INTO `fin_platform` (
-    `id`, `platform_code`, `platform_name`, `platform_type`, `logo_url`, `website_url`, 
-    `description`, `support_bill`, `bill_import_format`, `bill_email_domain`,
-    `api_config`, `sort_order`, `status`, 
-    `created_by`, `created_at`, `updated_by`, `updated_at`, `is_deleted`
-) VALUES
-    -- 微信
-    (1, 'WECHAT', '微信', 'E_WALLET', NULL, 'https://weixin.qq.com', 
-     '微信支付平台，支持微信钱包、微信支付', 1, 'CSV', NULL, 
-     NULL, 10, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 支付宝
-    (2, 'ALIPAY', '支付宝', 'E_WALLET', NULL, 'https://www.alipay.com', 
-     '支付宝平台，支持支付宝余额、花呗等', 1, 'CSV', NULL, 
-     NULL, 9, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 美团
-    (3, 'MEITUAN', '美团', 'PLATFORM', NULL, 'https://www.meituan.com', 
-     '美团平台，支持美团支付、美团月付等', 1, 'CSV', NULL, 
-     NULL, 8, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 工商银行
-    (4, 'ICBC', '工商银行', 'BANK', NULL, 'https://www.icbc.com.cn', 
-     '中国工商银行', 1, 'CSV', NULL, 
-     NULL, 7, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 建设银行
-    (5, 'CCB', '建设银行', 'BANK', NULL, 'https://www.ccb.com', 
-     '中国建设银行', 1, 'CSV', NULL, 
-     NULL, 6, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 宁波银行
-    (6, 'NINGBO', '宁波银行', 'BANK', NULL, 'https://www.nbcb.com.cn', 
-     '宁波银行，支持信用卡账单导入', 1, 'CSV', NULL, 
-     NULL, 5, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 招商银行
-    (7, 'CMB', '招商银行', 'BANK', NULL, 'https://www.cmbchina.com', 
-     '招商银行', 1, 'CSV', NULL, 
-     NULL, 4, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 抖音
-    (8, 'TIKTOK', '抖音', 'PLATFORM', NULL, 'https://www.douyin.com', 
-     '抖音平台，支持抖音支付', 1, 'CSV', NULL, 
-     NULL, 3, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 同花顺
-    (9, 'TONGHUASHUN', '同花顺', 'INVESTMENT', NULL, 'https://www.10jqka.com.cn', 
-     '同花顺投资平台', 1, 'CSV', NULL, 
-     NULL, 2, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0),
-    
-    -- 其他
-    (10, 'OTHER', '其他', 'OTHER', NULL, NULL, 
-     '其他未分类平台', 1, 'CSV', NULL, 
-     NULL, 1, 'ACTIVE', 
-     'system', NOW(), 'system', NOW(), 0);
-
-
--- ============================================
--- 测试数据：fin_payment_method 支付方式数据
--- 按平台维度插入
--- ============================================
-INSERT INTO `fin_payment_method` (
-    `id`, `payment_code`, `payment_name`, `payment_type`, `platform_code`, 
-    `status`, `remark`, `created_at`, `updated_at`
-) VALUES
-    -- ========== 微信平台 ==========
-    -- 微信支付（聚合支付）
-    (1, 'WECHAT_PAY', '微信支付', 'PLATFORM', 'WECHAT', 
-     'ACTIVE', '微信聚合支付，支持多种支付方式', NOW(), NOW()),
-    
-    -- 零钱
-    (2, 'WECHAT_BALANCE', '零钱', 'BALANCE', 'WECHAT', 
-     'ACTIVE', '微信零钱余额支付', NOW(), NOW()),
-    
-    -- 零钱通
-    (3, 'WECHAT_LINGQIAN_TONG', '零钱通', 'BALANCE', 'WECHAT', 
-     'ACTIVE', '微信零钱通理财产品', NOW(), NOW()),
-    
-    -- ========== 支付宝平台 ==========
-    -- 支付宝支付（聚合支付）
-    (4, 'ALIPAY_PAY', '支付宝支付', 'PLATFORM', 'ALIPAY', 
-     'ACTIVE', '支付宝聚合支付，支持多种支付方式', NOW(), NOW()),
-    
-    -- 余额
-    (5, 'ALIPAY_BALANCE', '余额', 'BALANCE', 'ALIPAY', 
-     'ACTIVE', '支付宝余额支付', NOW(), NOW()),
-    
-    -- 余额宝
-    (6, 'ALIPAY_YUEBAO', '余额宝', 'BALANCE', 'ALIPAY', 
-     'ACTIVE', '支付宝余额宝理财产品', NOW(), NOW()),
-    
-    -- 花呗
-    (7, 'ALIPAY_HUABEI', '花呗', 'CREDIT', 'ALIPAY', 
-     'ACTIVE', '支付宝花呗信用支付', NOW(), NOW()),
-    
-    -- ========== 美团平台 ==========
-    -- 美团支付
-    (8, 'MEITUAN_PAY', '美团支付', 'PLATFORM', 'MEITUAN', 
-     'ACTIVE', '美团聚合支付', NOW(), NOW()),
-    
-    -- 美团月付
-    (9, 'MEITUAN_MONTH', '美团月付', 'CREDIT', 'MEITUAN', 
-     'ACTIVE', '美团月付信用支付', NOW(), NOW()),
-    
-    -- ========== 抖音平台 ==========
-    -- 抖音支付
-    (10, 'TIKTOK_PAY', '抖音支付', 'PLATFORM', 'TIKTOK', 
-     'ACTIVE', '抖音聚合支付', NOW(), NOW()),
-    
-    -- ========== 银行类 - 通用支付方式 ==========
-    -- 银行卡支付（借记卡）
-    (11, 'BANK_DEBIT', '银行卡支付', 'BANK', NULL, 
-     'ACTIVE', '银行卡借记支付，适用于所有银行', NOW(), NOW()),
-    
-    -- 信用卡支付
-    (12, 'CREDIT_PAY', '信用卡支付', 'CREDIT', NULL, 
-     'ACTIVE', '信用卡支付，适用于所有银行信用卡', NOW(), NOW()),
-    
-    -- ========== 工商银行 ==========
-    -- 工商银行借记卡
-    (13, 'ICBC_DEBIT', '工商银行借记卡', 'BANK', 'ICBC', 
-     'ACTIVE', '工商银行储蓄卡支付', NOW(), NOW()),
-    
-    -- 工商银行信用卡
-    (14, 'ICBC_CREDIT', '工商银行信用卡', 'CREDIT', 'ICBC', 
-     'ACTIVE', '工商银行信用卡支付', NOW(), NOW()),
-    
-    -- ========== 建设银行 ==========
-    -- 建设银行借记卡
-    (15, 'CCB_DEBIT', '建设银行借记卡', 'BANK', 'CCB', 
-     'ACTIVE', '建设银行储蓄卡支付', NOW(), NOW()),
-    
-    -- 建设银行信用卡
-    (16, 'CCB_CREDIT', '建设银行信用卡', 'CREDIT', 'CCB', 
-     'ACTIVE', '建设银行信用卡支付', NOW(), NOW()),
-    
-    -- ========== 宁波银行 ==========
-    -- 宁波银行借记卡
-    (17, 'NINGBO_DEBIT', '宁波银行借记卡', 'BANK', 'NINGBO', 
-     'ACTIVE', '宁波银行储蓄卡支付', NOW(), NOW()),
-    
-    -- 宁波银行信用卡
-    (18, 'NINGBO_CREDIT', '宁波银行信用卡', 'CREDIT', 'NINGBO', 
-     'ACTIVE', '宁波银行信用卡支付', NOW(), NOW()),
-    
-    -- ========== 招商银行 ==========
-    -- 招商银行借记卡
-    (19, 'CMB_DEBIT', '招商银行借记卡', 'BANK', 'CMB', 
-     'ACTIVE', '招商银行储蓄卡支付', NOW(), NOW()),
-    
-    -- 招商银行信用卡
-    (20, 'CMB_CREDIT', '招商银行信用卡', 'CREDIT', 'CMB', 
-     'ACTIVE', '招商银行信用卡支付', NOW(), NOW());
-
-
-select * from fin_account;
-select * from fin_platform;
-select * from fin_payment_method;
-select * from fin_account where user_id = 3 and account_code in (
-    'ACCT-3-5');
-
-select * from fin_platform where platform_code = 'JD';
-
-select * from fin_payment_method where payment_code in ('WECHAT_PAY', 'NINGBO_CREDIT');
 
 -- 1、平台创建
 delete from fin_platform where platform_code in ('NINGBO','JD','WECHAT');
@@ -600,21 +408,75 @@ values ('NINGBO','宁波银行','BANK',1,1,1,1,'CSV','',NULL,NULL,NULL,NULL,1,'A
 
 -- 2、支付方式创建
 delete from fin_payment_method where payment_code in ('NINGBO_CREDIT','WECHAT_PAY');
-insert into fin_payment_method (payment_code, payment_name, payment_type, platform_code, status, remark, created_at, updated_at)
-values ('NINGBO_CREDIT','宁波银行信用卡支付','CREDIT','NINGBO','ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
-       ('WECHAT_PAY','微信支付','PLATFORM','WECHAT','ACTIVE','微信聚合支付，支持多种支付方式','system',NOW(),'system',NOW(),0);
+insert into fin_payment_method (payment_code, payment_name, payment_type, platform_code, status, remark, created_by,created_at, updated_by,updated_at, is_deleted)
+values ('NINGBO_CREDIT','宁波银行信用卡支付','CREDIT','NINGBO','ACTIVE',NULL,'system',NOW(),'system',NOW(),1),
+       ('WECHAT_PAY','微信支付','PLATFORM','WECHAT','ACTIVE','微信聚合支付，支持多种支付方式','system',NOW(),'system',NOW(),1);
 
 -- 3、账户创建
 select * from fin_account;
-delete from fin_account where user_id = 3 and account_code in ('NINGBO-3-1','WECHAT-3-3');
+delete from fin_account where user_id = 3 ;
 insert into fin_account (user_id, account_code, account_name, account_category, account_type, owner_type, platform_code, currency, balance, balance_updated_at, external_account_ref, is_virtual, status, remark, created_by, created_at, updated_by, updated_at, is_deleted)
 values (3,'NINGBO-3-1','宁波银行借记卡','BANK','DEBIT','USER','NINGBO','CNY',0.00,NULL,'123456',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
-       (3,'WECHAT-3-3','微信补贴','E_WALLET','WALLET','PLATFORM','WECHAT','CNY',0.00,NULL,'wxid_abcdefg',1,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
-       (3,'WECHAT-3-4','微信商户','CLEARING','CLEARING_ACCOUNT','MERCHANT','WECHAT','CNY',0.00,NULL,'wxid_abcdefg',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
-       (3,'JD-3-4','京东商户','CLEARING','CLEARING_ACCOUNT','MERCHANT','JD','CNY',0.00,NULL,'wxid_abcdefg',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
-       (3,'WECHAT-3-5','微信支付','E_WALLET','WALLET','PLATFORM','WECHAT','CNY',0.00,NULL,'wxid_abcdefg',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0);
+       (3,'WECHAT-3-3','微信补贴','E_WALLET','WALLET','PLATFORM','WECHAT','CNY',0.00,NULL,'wxid_abcdefg1',1,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
+       (3,'WECHAT-3-4','微信商户','LEDGER','VIRTUAL_LEDGER','MERCHANT','WECHAT','CNY',0.00,NULL,'wxid_abcdefg2',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
+       (3,'JD-3-4','京东商户','LEDGER','VIRTUAL_LEDGER','MERCHANT','JD','CNY',0.00,NULL,'jdid_abcdefg',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0),
+       (3,'WECHAT-3-5','微信支付','E_WALLET','WALLET','PLATFORM','WECHAT','CNY',0.00,NULL,'wxid_abcdefg3',0,'ACTIVE',NULL,'system',NOW(),'system',NOW(),0);
 
 -- 4、账单导入
+-- 同一笔交易的三条账单记录（跨平台对账场景）
+-- 订单号：6181972601231058520308800374 (商家订单号)
+-- 京东订单号：3387235006482426
+-- 微信交易单号：4200002923202601237288113096
 delete from fin_statement where user_id= 3 ;
-insert into fin_statement (user_id, file_id, platform_code, source_type, raw_row_hash, raw_data, out_trade_no, stmt_time, amount, direction, counterparty, account_ref, description, category_id, parser_version, retry_count, parsed_at, status, created_at, updated_at)
-values (3, 1, 'NINGBO', 'PLATFORM_ORDER', '123456', '{"out_trade_no": "123456", "stmt_time": "2023-05-01", "amount": 100.00, "direction": "IN", "counterparty": "京东", "account_ref": "123456", "description": "京东订单"}', '123456', '2023-0');
+insert into fin_statement (user_id, file_id, platform_code, source_type, raw_row_hash, raw_data, out_trade_no, stmt_time, amount, direction, counterparty, account_ref, description, category_id, parser_version, retry_count, parsed_at, status, created_by, created_at, updated_by, updated_at, is_deleted)
+values 
+    -- 京东账单：订单号 3387235006482426，商家订单号 6181972601231058520308800374
+    (3, 1, 'JD', 'PLATFORM_ORDER', MD5(CONCAT(1, 'JD_3387235006482426')), 
+     '{"platform":"JD","trade_time":"2026-01-23 10:59:04","merchant":"京东外卖","description":"老手艺肉酱米线 标准 米线 等多件","amount":15.3,"payment_method":"微信支付","status":"交易成功","direction":"支出","category":"食品酒饮","trade_order_no":"3387235006482426","merchant_order_no":"6181972601231058520308800374"}', 
+     '3387235006482426', '2026-01-23 10:59:04', 15.30, 'OUT', '京东外卖', 'JD-3-4', 
+     '老手艺肉酱米线 标准 米线 等多件', 16, 'v1.0', 0, NOW(), 'NEW',
+     'system', NOW(), 'system', NOW(), 0),
+    
+    -- 宁波银行账单：财付通扣款，关联京东订单
+    (3, 2, 'NINGBO', 'BANK_STATEMENT', MD5(CONCAT(2, 'NINGBO_20260123_15.2')), 
+     '{"platform":"NINGBO","trade_date":"2026/1/23","account_date":"2026/1/23","summary":"财付通-京东商城平台商户","amount":15.2,"direction":"支出"}', 
+     NULL, '2026-01-23 00:00:00', 15.20, 'OUT', '财付通-京东商城平台商户', 'NINGBO-3-1', 
+     '财付通-京东商城平台商户', 16, 'v1.0', 0, NOW(), 'NEW',
+     'system', NOW(), 'system', NOW(), 0),
+    
+    -- 微信账单：交易单号 4200002923202601237288113096，商户单号 6181972601231058520308800374
+    (3, 3, 'WECHAT', 'PLATFORM_ORDER', MD5(CONCAT(3, 'WECHAT_4200002923202601237288113096')), 
+     '{"platform":"WECHAT","trade_time":"2026-01-23 10:59:04","trade_type":"商户消费","counterparty":"京东","goods":"京东-订单编号3387235006482426","direction":"支出","amount":"¥15.20","payment_method":"宁波银行信用卡(4573)","status":"支付成功","trade_no":"4200002923202601237288113096","merchant_no":"6181972601231058520308800374","remark":"已优惠¥0.10"}', 
+     '4200002923202601237288113096', '2026-01-23 10:59:04', 15.20, 'OUT', '京东', 'wxid_abcdefg3', 
+     '京东-订单编号3387235006482426', 16, 'v1.0', 0, NOW(), 'NEW',
+     'system', NOW(), 'system', NOW(), 0);
+
+-- 5、交易表
+insert into fin_transaction (user_id, transaction_no, biz_type, biz_sub_type, category_id, trade_time, amount, currency, status, counterparty, platform_code, original_transaction_id, remark, created_by, created_at, updated_by, updated_at, is_deleted)
+values (3,'122','PAY','JD_PAY',16,'2026-01-23 10:59:04',15.30,'CNY','CONFIRMED','京东外卖','JD',NULL,'京东-订单编号3387235006482426','system',NOW(),'system',NOW(),0);
+
+truncate table fin_statement;
+truncate table fin_statement_file;
+select * from fin_statement_file;
+select * from fin_statement;
+select * from fin_statement_account_map;
+select * from fin_payment_method;
+select * from fin_transaction;
+
+select * from fin_payment_method;
+select * from fin_account;
+
+select * from transaction_category;
+
+SELECT * FROM category_keyword_mapping
+WHERE is_active = true
+  AND (
+    keyword LIKE CONCAT('%', :keyword, '%')
+        OR :keyword LIKE CONCAT('%', keyword, '%')
+    )
+ORDER BY weight DESC, keyword ASC;
+
+select a.*, b.name
+from fin_statement a
+         left join transaction_category b on a.category_id = b.id
+order by a.platform_code limit 100000;

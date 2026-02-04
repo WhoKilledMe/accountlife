@@ -107,21 +107,23 @@ public class MeituanFinStatementParser implements FinStatementCsvParser {
                 stmt.setCounterparty(extractMerchantName(mt));
                 stmt.setDescription(buildDescription(mt));
                 
-                // AI分类推断
+                // AI分类推断（结合counterparty和description）
                 if (categoryService != null) {
                     try {
+                        String counterparty = stmt.getCounterparty();  // 商户名称
                         String description = stmt.getDescription() != null ? stmt.getDescription() : "";
                         String amountStr = mt.getPaidAmount() != null ? mt.getPaidAmount() : "0";
                         // 美团都是支出，金额取负值
                         amountStr = "-" + amountStr.replaceAll("[¥￥,，]", "").trim();
                         
-                        var category = categoryService.inferTransactionCategory(description, amountStr, userId).block();
+                        // 使用新方法：传入counterparty + description
+                        var category = categoryService.inferTransactionCategory(counterparty, description, amountStr, userId).block();
                         if (category != null && category.getId() != null) {
                             stmt.setCategoryId(category.getId());
-                            log.debug("美团账单分类推断成功: {} -> {}", description, category.getName());
+                            log.debug("美团账单分类推断成功: {} [{}] -> {}", counterparty, description, category.getName());
                         }
                     } catch (Exception e) {
-                        log.warn("美团账单分类推断失败: {}", stmt.getDescription(), e);
+                        log.warn("美团账单分类推断失败: {} - {}", stmt.getCounterparty(), stmt.getDescription(), e);
                     }
                 }
                 

@@ -110,13 +110,14 @@ public class LabelDetailFinStatementParser implements FinStatementCsvParser {
                         String description = ld.getTransactionSummary() != null ? ld.getTransactionSummary() : "";
                         String amountStr = ld.getTransactionAmount() != null ? ld.getTransactionAmount() : "0";
                         
-                        var category = categoryService.inferTransactionCategory(description, amountStr, userId).block();
+                        // 使用新方法：传入counterparty + description
+                        var category = categoryService.inferTransactionCategory(stmt.getCounterparty(), description, amountStr, userId).block();
                         if (category != null && category.getId() != null) {
                             stmt.setCategoryId(category.getId());
-                            log.debug("LabelDetail账单分类推断成功: {} -> {}", description, category.getName());
+                            log.debug("LabelDetail账单分类推断成功: {} [{}] -> {}", stmt.getCounterparty(), description, category.getName());
                         }
                     } catch (Exception e) {
-                        log.warn("LabelDetail账单分类推断失败: {}", ld.getTransactionSummary(), e);
+                        log.warn("LabelDetail账单分类推断失败: {} - {}", stmt.getCounterparty(), stmt.getDescription(), e);
                     }
                 }
                 

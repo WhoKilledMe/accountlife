@@ -94,4 +94,19 @@ public interface CategoryKeywordMappingRepository extends ReactiveCrudRepository
         ORDER BY weight DESC, keyword ASC
         """)
     Flux<CategoryKeywordMapping> findByWeightGreaterThanEqual(Integer minWeight);
+    
+    /**
+     * 批量查询关键词（用于分词匹配优化）
+     * 查询所有关键词在文本中包含的映射，或文本在关键词中包含的映射
+     */
+    @Query("""
+        SELECT * FROM category_keyword_mapping 
+        WHERE is_active = true 
+        AND (
+            keyword LIKE CONCAT('%', :text, '%') 
+            OR :text LIKE CONCAT('%', keyword, '%')
+        )
+        ORDER BY weight DESC, LENGTH(keyword) DESC
+        """)
+    Flux<CategoryKeywordMapping> findMatchingKeywords(String text);
 } 

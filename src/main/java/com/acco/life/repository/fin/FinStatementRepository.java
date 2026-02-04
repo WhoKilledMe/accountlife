@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 账单行表 Repository
@@ -16,6 +17,22 @@ import java.time.LocalDateTime;
  * @version V2.0.0
  */
 public interface FinStatementRepository extends ReactiveCrudRepository<FinStatement, Long> {
+    
+    /**
+     * 批量插入账单行
+     * 
+     * @param statements 账单行列表
+     * @return 成功插入的记录数
+     */
+    Mono<Integer> batchInsert(List<FinStatement> statements);
+
+    /**
+     * 批量插入账单行（使用 INSERT IGNORE）
+     * 
+     * @param statements 账单行列表
+     * @return 成功插入的记录数
+     */
+    Mono<Integer> batchInsertIgnore(List<FinStatement> statements);
 
     /**
      * 根据文件ID查询

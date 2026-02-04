@@ -3,7 +3,6 @@ package com.acco.life.controller.fin;
 import com.acco.life.common.PageResponse;
 import com.acco.life.dto.fin.FinStatementDto;
 import com.acco.life.dto.fin.FinStatementFileDto;
-import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.entity.fin.FinStatementFile;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.repository.fin.FinStatementFileRepository;
@@ -21,6 +20,7 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +46,7 @@ public class FinStatementController {
     private final FinStatementRepository statementRepository;
     private final List<FinStatementCsvParser> csvParsers;
     private final AiTransactionCategoryService categoryService;
+    private final com.acco.life.service.fin.FinTransactionFlowService transactionFlowService;
 
     /**
      * 上传并解析账单文件
@@ -54,7 +55,8 @@ public class FinStatementController {
     public Mono<ResponseEntity<FinStatementFileDto>> upload(
             @RequestPart("file") Mono<FilePart> fileMono,
             @RequestParam("type") TransactionSourceType type,
-            @RequestParam(required = false, defaultValue = "FILE_UPLOAD") String sourceChannel) {
+            @RequestParam(required = false, defaultValue = "FILE_UPLOAD") String sourceChannel,
+            @RequestParam(required = false, defaultValue = "false") Boolean autoSync) {
         
         return fileMono.flatMap(filePart -> {
             Path tempFile = Paths.get(System.getProperty("java.io.tmpdir"), UUID.randomUUID() + "-" + filePart.filename());
@@ -91,26 +93,53 @@ public class FinStatementController {
                                                     fileRecord.setSourceChannel(sourceChannel);
                                                     fileRecord.setStatus("PROCESSING");
                                                     fileRecord.setUploadedAt(LocalDateTime.now());
-                                                    
+
                                                     return statementFileRepository.save(fileRecord)
                                                             .flatMap(savedFile -> {
                                                                 try {
-                                                                    // 解析文件
+                                                                    // 解析文件（阻塞IO，暂时保留）
                                                                     var dtos = parser.parse(Files.newInputStream(tempFile));
-                                                                    var statements = parser.buildStatements(dtos, userId, savedFile.getId(), categoryService);
-                                                                    
-                                                                    // 保存账单行
-                                                                    return statementRepository.saveAll(statements)
-                                                                            .collectList()
-                                                                            .flatMap(savedStatements -> {
-                                                                                // 更新文件记录
-                                                                                savedFile.setTotalRows(dtos.size());
-                                                                                savedFile.setSuccessCount(savedStatements.size());
-                                                                                savedFile.setFailureCount(dtos.size() - savedStatements.size());
-                                                                                savedFile.setStatus("COMPLETED");
-                                                                                savedFile.setProcessedAt(LocalDateTime.now());
+
+                                                                    // 在弹性线程池中构建账单行，内部允许 block()
+                                                                    return Mono.fromCallable(() ->
+                                                                                    parser.buildStatements(dtos, userId, savedFile.getId(), categoryService))
+                                                                            .subscribeOn(Schedulers.boundedElastic())
+                                                                            .flatMap(statements -> {
+                                                                                // 批量保存账单行（使用真正的批量插入，内部自动按100条分批）
+                                                                                int totalSize = statements.size();
+                                                                                log.info("开始批量保存账单行，总数量: {}", totalSize);
                                                                                 
-                                                                                return statementFileRepository.save(savedFile);
+                                                                                // 直接调用批量插入，ReactiveBatchInserter 内部会按100条分批处理
+                                                                                return statementRepository.batchInsertIgnore(statements)
+                                                                                        .onErrorResume(error -> {
+                                                                                            log.error("批量保存账单行失败: {}", error.getMessage(), error);
+                                                                                            return Mono.just(0); // 返回0表示失败
+                                                                                        })
+                                                                                        .flatMap(successCount -> {
+                                                                                            // 更新文件记录
+                                                                                            savedFile.setTotalRows(dtos.size());
+                                                                                            savedFile.setSuccessCount(successCount);
+                                                                                            savedFile.setFailureCount(totalSize - successCount);
+                                                                                            savedFile.setStatus("COMPLETED");
+                                                                                            savedFile.setProcessedAt(LocalDateTime.now());
+                                                                                            
+                                                                                            log.info("批量保存账单行完成，总数量: {}, 成功: {}, 失败: {}", 
+                                                                                                    totalSize, successCount, totalSize - successCount);
+
+                                                                                            return statementFileRepository.save(savedFile)
+                                                                                                    .flatMap(saved -> {
+                                                                                                        // 如果启用自动同步，执行一键同步
+                                                                                                        if (Boolean.TRUE.equals(autoSync)) {
+                                                                                                            return transactionFlowService.syncAll(userId)
+                                                                                                                    .then(Mono.just(saved))
+                                                                                                                    .onErrorResume(e -> {
+                                                                                                                        log.warn("自动同步失败，但文件已导入", e);
+                                                                                                                        return Mono.just(saved);
+                                                                                                                    });
+                                                                                                        }
+                                                                                                        return Mono.just(saved);
+                                                                                                    });
+                                                                                        });
                                                                             });
                                                                 } catch (Exception e) {
                                                                     log.error("解析文件失败", e);

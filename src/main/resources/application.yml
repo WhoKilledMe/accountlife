@@ -2,19 +2,36 @@ spring:
   application:
     name: account_life
   r2dbc:
-    url: r2dbc:mariadb://localhost:3306/account_life?allowPublicKeyRetrieval=true&useSSL=false
+    url: r2dbc:mariadb://localhost:3306/account_life?allowPublicKeyRetrieval=true&useSSL=false&useServerPrepStmts=true
     username: root
     password: root
     pool:
       enabled: true
-      initial-size: 10
-      max-size: 50
-      max-idle-time: PT30S
-      max-life-time: PT30M
-      max-acquire-time: PT5S
-      max-create-connection-time: PT5S
-      validation-query: SELECT 1
-      background-eviction-interval: PT30S
+      # 连接池大小配置 - 保持足够的连接池避免频繁创建
+      initial-size: 10          # 初始连接数（增加到10）
+      min-size: 10              # 最小连接数（增加到10，保持连接池温度）
+      max-size: 30              # 最大连接数（增加到30，应对并发）
+      
+      # 连接生命周期配置 - 延长生命周期减少重建频率
+      max-idle-time: PT15M      # 空闲超时15分钟（原60秒太短）
+      max-life-time: PT30M      # 连接最大生命周期30分钟（原2分钟太短）
+      
+      # 连接获取和创建超时
+      max-acquire-time: PT15S   # 从池中获取连接的最大等待时间
+      max-create-connection-time: PT10S  # 创建新连接的最大时间
+      
+      # 连接验证配置
+      initial-validation-query: SELECT 1  # 初始化时验证连接
+      validation-query: SELECT 1          # 获取连接时验证
+      
+      # 后台清理配置 - 降低清理频率
+      background-eviction-interval: PT5M  # 后台清理间隔5分钟（原30秒太频繁）
+  
+  # 客户端配置，设置查询超时
+  client:
+    # 设置语句执行超时时间
+    statement:
+      timeout: PT30S
   sql:
     init:
       mode: always

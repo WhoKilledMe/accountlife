@@ -136,6 +136,13 @@
             <artifactId>angus-mail</artifactId>
             <version>2.0.3</version>
         </dependency>
+        
+        <!-- Caffeine 本地缓存 - 优化关键词映射查询性能 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

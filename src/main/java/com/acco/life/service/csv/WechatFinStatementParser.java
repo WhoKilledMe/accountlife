@@ -7,10 +7,12 @@ import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.enums.fin.FlowDirection;
 import com.acco.life.enums.fin.StatementStatus;
 import com.acco.life.service.AiTransactionCategoryService;
+import com.acco.life.service.fin.FinStatementMappingService;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
@@ -30,10 +32,12 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class WechatFinStatementParser implements FinStatementCsvParser {
 
     private final CsvMapper csvMapper = new CsvMapper();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FinStatementMappingService mappingService;
 
     @Override
     public boolean supports(TransactionSourceType sourceType) {
@@ -125,7 +129,7 @@ public class WechatFinStatementParser implements FinStatementCsvParser {
                 stmt.setCounterparty(wechat.getCounterparty());
                 stmt.setDescription(buildDescription(wechat));
                 
-                // 设置账户引用 - 从支付方式中提取（如"宁波银行信用卡(4573)"）
+                // 设置账户引用 - 先通过配置化映射，再从支付方式中提取（如"宁波银行信用卡(4573)"）
                 stmt.setAccountRef(extractAccountRef(wechat.getPaymentMethod()));
                 
                 // AI分类推断
@@ -140,13 +144,14 @@ public class WechatFinStatementParser implements FinStatementCsvParser {
                             amountStr = amountStr.replaceAll("[¥￥,，]", "").trim();
                         }
                         
-                        var category = categoryService.inferTransactionCategory(description, amountStr, userId).block();
+                        // 使用新方法：传入counterparty + description
+                        var category = categoryService.inferTransactionCategory(stmt.getCounterparty(), description, amountStr, userId).block();
                         if (category != null && category.getId() != null) {
                             stmt.setCategoryId(category.getId());
-                            log.debug("微信账单分类推断成功: {} -> {}", description, category.getName());
+                            log.debug("微信账单分类推断成功: {} [{}] -> {}", stmt.getCounterparty(), description, category.getName());
                         }
                     } catch (Exception e) {
-                        log.warn("微信账单分类推断失败: {}", stmt.getDescription(), e);
+                        log.warn("微信账单分类推断失败: {} - {}", stmt.getCounterparty(), stmt.getDescription(), e);
                     }
                 }
                 
@@ -218,17 +223,37 @@ public class WechatFinStatementParser implements FinStatementCsvParser {
         return sb.toString();
     }
 
+    /**
+     * 从收/付款方式中提取账户引用，先走配置表规则，再做通用兜底逻辑
+     */
     private String extractAccountRef(String paymentMethod) {
         if (paymentMethod == null || paymentMethod.isEmpty()) {
             return null;
         }
-        // 尝试提取卡号尾号，如"宁波银行信用卡(4573)" -> "4573"
-        int start = paymentMethod.indexOf('(');
-        int end = paymentMethod.indexOf(')');
-        if (start > 0 && end > start) {
-            return paymentMethod.substring(start + 1, end);
+        String pm = paymentMethod.trim();
+
+        // 优先使用配置化映射规则
+        try {
+            String mapped = mappingService.mapAccountRef(getPlatformCode(), pm).block();
+            if (mapped != null && !mapped.isEmpty() && !pm.equals(mapped)) {
+                return mapped;
+            }
+        } catch (Exception e) {
+            log.warn("微信账单 account_ref 映射规则执行失败，回退到本地逻辑: {}", pm, e);
         }
-        // 如果没有括号，返回整个支付方式
-        return paymentMethod;
+
+        // 兜底逻辑：兼容未配置规则的情况
+        // 尝试提取卡号尾号，如"宁波银行信用卡(4573)" -> "4573"
+        int start = pm.indexOf('(');
+        int end = pm.indexOf(')');
+        if (start > 0 && end > start) {
+            String tail = pm.substring(start + 1, end).trim();
+            if (!tail.isEmpty()) {
+                return tail;
+            }
+        }
+
+        // 其他情况：直接返回原始支付方式文本
+        return pm;
     }
 }
