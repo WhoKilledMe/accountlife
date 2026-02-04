@@ -5,21 +5,32 @@ import com.acco.life.dto.fin.FinStatementDto;
 import com.acco.life.dto.fin.FinStatementFileDto;
 import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.entity.fin.FinStatementFile;
+import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.enums.fin.StatementStatus;
 import com.acco.life.mapper.fin.FinStatementFileMapper;
 import com.acco.life.mapper.fin.FinStatementMapper;
 import com.acco.life.repository.fin.FinStatementFileRepository;
 import com.acco.life.repository.fin.FinStatementRepository;
+import com.acco.life.service.AiTransactionCategoryService;
+import com.acco.life.service.csv.FinStatementCsvParser;
 import com.acco.life.service.fin.FinStatementService;
+import com.acco.life.service.fin.FinTransactionFlowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 账单导入与解析服务实现
@@ -36,6 +47,19 @@ public class FinStatementServiceImpl implements FinStatementService {
     private final FinStatementRepository statementRepository;
     private final FinStatementFileMapper statementFileMapper;
     private final FinStatementMapper statementMapper;
+    private final List<FinStatementCsvParser> csvParsers;
+    private final AiTransactionCategoryService categoryService;
+    private final FinTransactionFlowService transactionFlowService;
+
+    @Override
+    public Mono<FinStatementFileDto> uploadFile(Long userId, FilePart filePart, TransactionSourceType type,
+                                                 String sourceChannel, Boolean autoSync) {
+        Path tempFile = createTempFile(filePart.filename());
+        
+        return filePart.transferTo(tempFile)
+                .then(Mono.defer(() -> processUploadedFile(userId, filePart, type, sourceChannel, autoSync, tempFile)))
+                .doFinally(signal -> cleanupTempFile(tempFile));
+    }
 
     @Override
     public Mono<FinStatementFileDto> importFile(Long userId, String platformCode, String fileName, String fileMd5,
@@ -197,5 +221,137 @@ public class FinStatementServiceImpl implements FinStatementService {
         }
         
         return dto;
+    }
+
+    private Path createTempFile(String originalFilename) {
+        String tempFileName = UUID.randomUUID() + "-" + originalFilename;
+        return Paths.get(System.getProperty("java.io.tmpdir"), tempFileName);
+    }
+
+    private Mono<FinStatementFileDto> processUploadedFile(Long userId, FilePart filePart, TransactionSourceType type,
+                                                           String sourceChannel, Boolean autoSync, Path tempFile) {
+        try {
+            String fileMd5 = calculateFileMd5(tempFile);
+            FinStatementCsvParser parser = findParser(type);
+            
+            return checkFileNotImported(fileMd5)
+                    .flatMap(notImported -> {
+                        if (!notImported) {
+                            return Mono.error(new IllegalStateException("文件已导入"));
+                        }
+                        return createFileRecord(userId, filePart, parser, fileMd5, sourceChannel)
+                                .flatMap(savedFile -> parseAndSaveStatements(savedFile, parser, tempFile, userId, autoSync));
+                    });
+        } catch (Exception e) {
+            log.error("处理上传文件失败", e);
+            return Mono.error(e);
+        }
+    }
+
+    private String calculateFileMd5(Path tempFile) {
+        try {
+            byte[] fileBytes = Files.readAllBytes(tempFile);
+            return DigestUtils.md5DigestAsHex(fileBytes);
+        } catch (Exception e) {
+            log.error("计算文件MD5失败", e);
+            throw new RuntimeException("计算文件MD5失败", e);
+        }
+    }
+
+    private FinStatementCsvParser findParser(TransactionSourceType type) {
+        return csvParsers.stream()
+                .filter(p -> p.supports(type))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("未找到匹配的解析器: " + type));
+    }
+
+    private Mono<Boolean> checkFileNotImported(String fileMd5) {
+        return isFileImported(fileMd5)
+                .map(imported -> !imported);
+    }
+
+    private Mono<FinStatementFile> createFileRecord(Long userId, FilePart filePart, FinStatementCsvParser parser,
+                                                     String fileMd5, String sourceChannel) {
+        FinStatementFile fileRecord = new FinStatementFile();
+        fileRecord.setUserId(userId);
+        fileRecord.setPlatformCode(parser.getPlatformCode());
+        fileRecord.setFileName(filePart.filename());
+        fileRecord.setFileMd5(fileMd5);
+        fileRecord.setFileType("CSV");
+        fileRecord.setSourceChannel(sourceChannel);
+        fileRecord.setStatus("PROCESSING");
+        fileRecord.setUploadedAt(LocalDateTime.now());
+        
+        return statementFileRepository.save(fileRecord);
+    }
+
+    private Mono<FinStatementFileDto> parseAndSaveStatements(FinStatementFile savedFile, FinStatementCsvParser parser,
+                                                               Path tempFile, Long userId, Boolean autoSync) {
+        try {
+            var dtos = parser.parse(Files.newInputStream(tempFile));
+            
+            return Mono.fromCallable(() -> parser.buildStatements(dtos, userId, savedFile.getId(), categoryService))
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .flatMap(statements -> saveStatementsAndUpdateFile(savedFile, statements, dtos.size(), userId, autoSync))
+                    .map(statementFileMapper::toDto);
+        } catch (Exception e) {
+            log.error("解析文件失败", e);
+            return markFileAsFailed(savedFile, e.getMessage())
+                    .map(statementFileMapper::toDto);
+        }
+    }
+
+    private Mono<FinStatementFile> saveStatementsAndUpdateFile(FinStatementFile savedFile, List<FinStatement> statements,
+                                                                int totalRows, Long userId, Boolean autoSync) {
+        int totalSize = statements.size();
+        log.info("开始批量保存账单行，总数量: {}", totalSize);
+        
+        return statementRepository.batchInsertIgnore(statements)
+                .onErrorResume(error -> {
+                    log.error("批量保存账单行失败: {}", error.getMessage(), error);
+                    return Mono.just(0);
+                })
+                .flatMap(successCount -> {
+                    updateFileRecord(savedFile, totalRows, successCount, totalSize);
+                    log.info("批量保存账单行完成，总数量: {}, 成功: {}, 失败: {}", 
+                            totalSize, successCount, totalSize - successCount);
+                    
+                    return statementFileRepository.save(savedFile)
+                            .flatMap(saved -> handleAutoSync(saved, userId, autoSync));
+                });
+    }
+
+    private void updateFileRecord(FinStatementFile file, int totalRows, int successCount, int totalSize) {
+        file.setTotalRows(totalRows);
+        file.setSuccessCount(successCount);
+        file.setFailureCount(totalSize - successCount);
+        file.setStatus("COMPLETED");
+        file.setProcessedAt(LocalDateTime.now());
+    }
+
+    private Mono<FinStatementFile> handleAutoSync(FinStatementFile savedFile, Long userId, Boolean autoSync) {
+        if (Boolean.TRUE.equals(autoSync)) {
+            return transactionFlowService.syncAll(userId)
+                    .then(Mono.just(savedFile))
+                    .onErrorResume(e -> {
+                        log.warn("自动同步失败，但文件已导入", e);
+                        return Mono.just(savedFile);
+                    });
+        }
+        return Mono.just(savedFile);
+    }
+
+    private Mono<FinStatementFile> markFileAsFailed(FinStatementFile file, String errorMessage) {
+        file.setStatus("FAILED");
+        file.setErrorLog(errorMessage);
+        return statementFileRepository.save(file);
+    }
+
+    private void cleanupTempFile(Path tempFile) {
+        try {
+            Files.deleteIfExists(tempFile);
+        } catch (Exception e) {
+            log.warn("删除临时文件失败: {}", tempFile, e);
+        }
     }
 }

@@ -3,12 +3,7 @@ package com.acco.life.controller.fin;
 import com.acco.life.common.PageResponse;
 import com.acco.life.dto.fin.FinStatementDto;
 import com.acco.life.dto.fin.FinStatementFileDto;
-import com.acco.life.entity.fin.FinStatementFile;
 import com.acco.life.enums.TransactionSourceType;
-import com.acco.life.repository.fin.FinStatementFileRepository;
-import com.acco.life.repository.fin.FinStatementRepository;
-import com.acco.life.service.AiTransactionCategoryService;
-import com.acco.life.service.csv.FinStatementCsvParser;
 import com.acco.life.service.fin.FinStatementService;
 import com.acco.life.util.UserUtil;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +12,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 账单管理 Controller
@@ -42,15 +31,7 @@ import java.util.UUID;
 public class FinStatementController {
 
     private final FinStatementService statementService;
-    private final FinStatementFileRepository statementFileRepository;
-    private final FinStatementRepository statementRepository;
-    private final List<FinStatementCsvParser> csvParsers;
-    private final AiTransactionCategoryService categoryService;
-    private final com.acco.life.service.fin.FinTransactionFlowService transactionFlowService;
 
-    /**
-     * 上传并解析账单文件
-     */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<FinStatementFileDto>> upload(
             @RequestPart("file") Mono<FilePart> fileMono,
@@ -58,120 +39,10 @@ public class FinStatementController {
             @RequestParam(required = false, defaultValue = "FILE_UPLOAD") String sourceChannel,
             @RequestParam(required = false, defaultValue = "false") Boolean autoSync) {
         
-        return fileMono.flatMap(filePart -> {
-            Path tempFile = Paths.get(System.getProperty("java.io.tmpdir"), UUID.randomUUID() + "-" + filePart.filename());
-            
-            return filePart.transferTo(tempFile)
-                    .then(Mono.defer(() -> {
-                        try {
-                            // 计算文件 MD5
-                            byte[] fileBytes = Files.readAllBytes(tempFile);
-                            String fileMd5 = DigestUtils.md5DigestAsHex(fileBytes);
-                            
-                            // 获取对应的解析器
-                            FinStatementCsvParser parser = csvParsers.stream()
-                                    .filter(p -> p.supports(type))
-                                    .findFirst()
-                                    .orElseThrow(() -> new IllegalArgumentException("未找到匹配的解析器: " + type));
-                            
-                            return UserUtil.getCurrentUserId()
-                                    .flatMap(userId -> {
-                                        // 检查文件是否已导入
-                                        return statementService.isFileImported(fileMd5)
-                                                .flatMap(imported -> {
-                                                    if (imported) {
-                                                        return Mono.error(new IllegalStateException("文件已导入"));
-                                                    }
-                                                    
-                                                    // 创建文件记录
-                                                    FinStatementFile fileRecord = new FinStatementFile();
-                                                    fileRecord.setUserId(userId);
-                                                    fileRecord.setPlatformCode(parser.getPlatformCode());
-                                                    fileRecord.setFileName(filePart.filename());
-                                                    fileRecord.setFileMd5(fileMd5);
-                                                    fileRecord.setFileType("CSV");
-                                                    fileRecord.setSourceChannel(sourceChannel);
-                                                    fileRecord.setStatus("PROCESSING");
-                                                    fileRecord.setUploadedAt(LocalDateTime.now());
-
-                                                    return statementFileRepository.save(fileRecord)
-                                                            .flatMap(savedFile -> {
-                                                                try {
-                                                                    // 解析文件（阻塞IO，暂时保留）
-                                                                    var dtos = parser.parse(Files.newInputStream(tempFile));
-
-                                                                    // 在弹性线程池中构建账单行，内部允许 block()
-                                                                    return Mono.fromCallable(() ->
-                                                                                    parser.buildStatements(dtos, userId, savedFile.getId(), categoryService))
-                                                                            .subscribeOn(Schedulers.boundedElastic())
-                                                                            .flatMap(statements -> {
-                                                                                // 批量保存账单行（使用真正的批量插入，内部自动按100条分批）
-                                                                                int totalSize = statements.size();
-                                                                                log.info("开始批量保存账单行，总数量: {}", totalSize);
-                                                                                
-                                                                                // 直接调用批量插入，ReactiveBatchInserter 内部会按100条分批处理
-                                                                                return statementRepository.batchInsertIgnore(statements)
-                                                                                        .onErrorResume(error -> {
-                                                                                            log.error("批量保存账单行失败: {}", error.getMessage(), error);
-                                                                                            return Mono.just(0); // 返回0表示失败
-                                                                                        })
-                                                                                        .flatMap(successCount -> {
-                                                                                            // 更新文件记录
-                                                                                            savedFile.setTotalRows(dtos.size());
-                                                                                            savedFile.setSuccessCount(successCount);
-                                                                                            savedFile.setFailureCount(totalSize - successCount);
-                                                                                            savedFile.setStatus("COMPLETED");
-                                                                                            savedFile.setProcessedAt(LocalDateTime.now());
-                                                                                            
-                                                                                            log.info("批量保存账单行完成，总数量: {}, 成功: {}, 失败: {}", 
-                                                                                                    totalSize, successCount, totalSize - successCount);
-
-                                                                                            return statementFileRepository.save(savedFile)
-                                                                                                    .flatMap(saved -> {
-                                                                                                        // 如果启用自动同步，执行一键同步
-                                                                                                        if (Boolean.TRUE.equals(autoSync)) {
-                                                                                                            return transactionFlowService.syncAll(userId)
-                                                                                                                    .then(Mono.just(saved))
-                                                                                                                    .onErrorResume(e -> {
-                                                                                                                        log.warn("自动同步失败，但文件已导入", e);
-                                                                                                                        return Mono.just(saved);
-                                                                                                                    });
-                                                                                                        }
-                                                                                                        return Mono.just(saved);
-                                                                                                    });
-                                                                                        });
-                                                                            });
-                                                                } catch (Exception e) {
-                                                                    log.error("解析文件失败", e);
-                                                                    savedFile.setStatus("FAILED");
-                                                                    savedFile.setErrorLog(e.getMessage());
-                                                                    return statementFileRepository.save(savedFile);
-                                                                }
-                                                            });
-                                                });
-                                    });
-                        } catch (Exception e) {
-                            return Mono.error(e);
-                        }
-                    }))
-                    .map(file -> {
-                        FinStatementFileDto dto = new FinStatementFileDto();
-                        dto.setId(file.getId());
-                        dto.setFileName(file.getFileName());
-                        dto.setStatus(file.getStatus());
-                        dto.setTotalRows(file.getTotalRows());
-                        dto.setSuccessCount(file.getSuccessCount());
-                        dto.setFailureCount(file.getFailureCount());
-                        return ResponseEntity.ok(dto);
-                    })
-                    .doFinally(signal -> {
-                        try {
-                            Files.deleteIfExists(tempFile);
-                        } catch (Exception e) {
-                            log.warn("删除临时文件失败", e);
-                        }
-                    });
-        });
+        return UserUtil.getCurrentUserId()
+                .flatMap(userId -> fileMono
+                        .flatMap(filePart -> statementService.uploadFile(userId, filePart, type, sourceChannel, autoSync))
+                        .map(ResponseEntity::ok));
     }
 
     /**

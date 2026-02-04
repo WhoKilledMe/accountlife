@@ -3,9 +3,12 @@ package com.acco.life.service.fin;
 import com.acco.life.common.PageResponse;
 import com.acco.life.dto.fin.FinStatementDto;
 import com.acco.life.dto.fin.FinStatementFileDto;
+import com.acco.life.enums.TransactionSourceType;
+import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +19,19 @@ import java.util.List;
  * @version V2.0.0
  */
 public interface FinStatementService {
+
+    /**
+     * 上传并解析账单文件
+     *
+     * @param userId 用户ID
+     * @param filePart 文件部分
+     * @param type 交易来源类型
+     * @param sourceChannel 导入渠道
+     * @param autoSync 是否自动同步
+     * @return 文件导入记录
+     */
+    Mono<FinStatementFileDto> uploadFile(Long userId, FilePart filePart, TransactionSourceType type,
+                                          String sourceChannel, Boolean autoSync);
 
     /**
      * 导入账单文件
