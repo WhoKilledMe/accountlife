@@ -19,6 +19,7 @@ public enum TransactionSourceType {
     CREDIT_WALLET(4, "信用钱包"),
     ALIPAY(5, "支付宝"),
     WECHAT(6, "微信支付"),
+    MEITUAN(7, "美团"),
     JINGDONG(7, "京东");
 
     public final int code;

@@ -6,9 +6,11 @@ import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.enums.TransactionSourceType;
 import com.acco.life.enums.fin.FlowDirection;
 import com.acco.life.service.AiTransactionCategoryService;
+import com.acco.life.service.fin.FinStatementMappingService;
 import com.acco.life.util.CsvUtil;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,11 +27,14 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MeituanFinStatementParser extends AbstractFinStatementParser implements FinStatementCsvParser {
+
+    private final FinStatementMappingService mappingService;
 
     @Override
     public boolean supports(TransactionSourceType sourceType) {
-        return sourceType == TransactionSourceType.PLATFORM;
+        return sourceType == TransactionSourceType.MEITUAN;
     }
 
     @Override
@@ -83,6 +88,7 @@ public class MeituanFinStatementParser extends AbstractFinStatementParser implem
         setTimeAndAmount(stmt, mt);
         setDirection(stmt);
         setMerchantInfo(stmt, mt);
+        setAccountRef(stmt, mt.getPaymentMethod(), getPlatformCode(), mappingService);
         inferCategoryIfNeeded(stmt, mt, userId, categoryService);
         
         return stmt;
@@ -125,6 +131,8 @@ public class MeituanFinStatementParser extends AbstractFinStatementParser implem
     private void inferCategoryIfNeeded(FinStatement stmt, FileTransactionMeituan mt, Long userId,
                                       AiTransactionCategoryService categoryService) {
         if (categoryService == null) {
+            // 如果没有分类服务，默认设置为外卖分类（ID: 1602）
+            stmt.setCategoryId(1602L);
             return;
         }
         
@@ -133,7 +141,22 @@ public class MeituanFinStatementParser extends AbstractFinStatementParser implem
         String amountStr = mt.getPaidAmount() != null ? mt.getPaidAmount() : "0";
         String cleanAmount = formatAmountForCategory(amountStr, "支出");
         
-        inferCategory(stmt, counterparty, description, cleanAmount, userId, categoryService);
+        try {
+            String cleanAmountForCategory = cleanAmount.replaceAll("[¥￥,，]", "").trim();
+            var category = categoryService.inferTransactionCategory(counterparty, description, cleanAmountForCategory, userId).block();
+            if (category != null && category.getId() != null) {
+                stmt.setCategoryId(category.getId());
+                log.debug("账单分类推断成功: {} [{}] -> {}", counterparty, description, category.getName());
+            } else {
+                // 如果匹配不到分类，默认设置为外卖分类（ID: 1602）
+                stmt.setCategoryId(1602L);
+                log.debug("账单分类推断失败，使用默认外卖分类: {} [{}]", counterparty, description);
+            }
+        } catch (Exception e) {
+            // 如果推断过程出错，默认设置为外卖分类（ID: 1602）
+            stmt.setCategoryId(1602L);
+            log.warn("账单分类推断异常，使用默认外卖分类: {} - {}", counterparty, description, e);
+        }
     }
 
     private String extractMerchantName(FileTransactionMeituan mt) {

@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -33,15 +34,16 @@ public class FinStatementController {
     private final FinStatementService statementService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Mono<ResponseEntity<FinStatementFileDto>> upload(
-            @RequestPart("file") Mono<FilePart> fileMono,
+    public Mono<ResponseEntity<List<FinStatementFileDto>>> upload(
+            @RequestPart("files") Flux<FilePart> filesFlux,
             @RequestParam("type") TransactionSourceType type,
             @RequestParam(required = false, defaultValue = "FILE_UPLOAD") String sourceChannel,
             @RequestParam(required = false, defaultValue = "false") Boolean autoSync) {
         
         return UserUtil.getCurrentUserId()
-                .flatMap(userId -> fileMono
+                .flatMap(userId -> filesFlux
                         .flatMap(filePart -> statementService.uploadFile(userId, filePart, type, sourceChannel, autoSync))
+                        .collectList()
                         .map(ResponseEntity::ok));
     }
 

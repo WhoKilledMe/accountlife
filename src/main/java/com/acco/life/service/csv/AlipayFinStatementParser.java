@@ -4,6 +4,7 @@ import com.acco.life.dto.FileTransactionDto;
 import com.acco.life.dto.FileTransactionAlipay;
 import com.acco.life.entity.fin.FinStatement;
 import com.acco.life.enums.TransactionSourceType;
+import com.acco.life.enums.fin.FlowDirection;
 import com.acco.life.service.AiTransactionCategoryService;
 import com.acco.life.service.fin.FinStatementMappingService;
 import com.acco.life.util.CsvUtil;
@@ -63,31 +64,35 @@ public class AlipayFinStatementParser extends AbstractFinStatementParser impleme
         List<FinStatement> statements = new ArrayList<>();
         
         for (FileTransactionDto dto : dtos) {
-            if (!(dto instanceof FileTransactionAlipay alipay)) {
-                continue;
-            }
-            
-            if (shouldSkip(alipay)) {
-                continue;
-            }
-            
-            try {
-                FinStatement stmt = buildStatement(alipay, userId, fileId, categoryService);
-                statements.add(stmt);
-            } catch (Exception e) {
-                log.error("解析支付宝账单行失败: {}", alipay, e);
+            if (dto instanceof FileTransactionAlipay alipay) {
+                try {
+                    FinStatement stmt = buildStatement(alipay, userId, fileId, categoryService);
+                    statements.add(stmt);
+                } catch (Exception e) {
+                    log.error("解析支付宝账单行失败: {}", alipay, e);
+                }
             }
         }
         
         return statements;
     }
-
-    private boolean shouldSkip(FileTransactionAlipay alipay) {
-        if ("不计收支".equals(alipay.getIncomeOrExpense())) {
-            log.debug("跳过不计收支交易: {}", alipay.getProductDescription());
-            return true;
-        }
-        return false;
+    
+    private boolean isRefundOrReturn(String productDesc, String tradeCategory, String tradeOrderNo) {
+        String combined = (productDesc + " " + tradeCategory + " " + tradeOrderNo).toLowerCase();
+        return combined.contains("退款") 
+                || combined.contains("退货")
+                || combined.contains("refund")
+                || tradeOrderNo.contains("REFUND");
+    }
+    
+    private boolean isYuebaoIncome(String productDesc, String tradeCategory) {
+        String combined = (productDesc + " " + tradeCategory).toLowerCase();
+        return combined.contains("余额宝") && combined.contains("收益");
+    }
+    
+    private boolean isYuebaoTransfer(String productDesc, String tradeCategory) {
+        String combined = (productDesc + " " + tradeCategory).toLowerCase();
+        return combined.contains("余额宝") && (combined.contains("自动转入") || combined.contains("自动转出"));
     }
 
     private FinStatement buildStatement(FileTransactionAlipay alipay, Long userId, Long fileId,
@@ -131,8 +136,29 @@ public class AlipayFinStatementParser extends AbstractFinStatementParser impleme
     }
 
     private void setDirection(FinStatement stmt, FileTransactionAlipay alipay) {
-        BigDecimal amountValue = parseAmount(alipay.getAmount());
-        stmt.setDirection(determineDirection(alipay.getIncomeOrExpense(), amountValue));
+        if ("不计收支".equals(alipay.getIncomeOrExpense())) {
+            String direction = determineDirectionForNonIncomeExpense(alipay);
+            stmt.setDirection(direction);
+        } else {
+            BigDecimal amountValue = parseAmount(alipay.getAmount());
+            stmt.setDirection(determineDirection(alipay.getIncomeOrExpense(), amountValue));
+        }
+    }
+    
+    private String determineDirectionForNonIncomeExpense(FileTransactionAlipay alipay) {
+        String productDesc = alipay.getProductDescription() != null ? alipay.getProductDescription() : "";
+        String tradeCategory = alipay.getTradeCategory() != null ? alipay.getTradeCategory() : "";
+        String tradeOrderNo = alipay.getTradeOrderNo() != null ? alipay.getTradeOrderNo() : "";
+        
+        if (isRefundOrReturn(productDesc, tradeCategory, tradeOrderNo)) {
+            return FlowDirection.IN.getCode();
+        }
+        
+        if (isYuebaoIncome(productDesc, tradeCategory)) {
+            return FlowDirection.IN.getCode();
+        }
+        
+        return FlowDirection.OUT.getCode();
     }
 
     private void setMerchantInfo(FinStatement stmt, FileTransactionAlipay alipay) {
@@ -141,11 +167,7 @@ public class AlipayFinStatementParser extends AbstractFinStatementParser impleme
     }
 
     private void setAccountRef(FinStatement stmt, FileTransactionAlipay alipay) {
-        String accountRef = extractAccountRefFromPaymentMethod(
-                alipay.getPaymentMethod(), 
-                getPlatformCode(), 
-                mappingService);
-        stmt.setAccountRef(accountRef);
+        setAccountRef(stmt, alipay.getPaymentMethod(), getPlatformCode(), mappingService);
     }
 
     private void inferCategoryIfNeeded(FinStatement stmt, FileTransactionAlipay alipay, Long userId,
@@ -155,11 +177,21 @@ public class AlipayFinStatementParser extends AbstractFinStatementParser impleme
         }
         
         String description = stmt.getDescription() != null ? stmt.getDescription() : "";
-        String amountStr = formatAmountForCategory(
+        String amountStr = formatAmountForCategoryByDirection(
                 alipay.getAmount() != null ? alipay.getAmount() : "0",
-                alipay.getIncomeOrExpense());
+                stmt.getDirection());
         
         inferCategory(stmt, stmt.getCounterparty(), description, amountStr, userId, categoryService);
+    }
+    
+    private String formatAmountForCategoryByDirection(String amountStr, String direction) {
+        String cleaned = amountStr.replaceAll("[¥￥,，]", "").trim();
+        if (FlowDirection.IN.getCode().equals(direction)) {
+            return cleaned;
+        } else if (FlowDirection.OUT.getCode().equals(direction)) {
+            return "-" + cleaned;
+        }
+        return cleaned;
     }
 
     private String buildDescription(FileTransactionAlipay alipay) {

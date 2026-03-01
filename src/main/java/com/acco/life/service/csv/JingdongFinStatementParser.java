@@ -149,11 +149,7 @@ public class JingdongFinStatementParser extends AbstractFinStatementParser imple
     }
 
     private void setAccountRef(FinStatement stmt, FileTransactionJingdong jd) {
-        String accountRef = extractAccountRefFromPaymentMethod(
-                jd.getPaymentMethod(), 
-                getPlatformCode(), 
-                mappingService);
-        stmt.setAccountRef(accountRef);
+        setAccountRef(stmt, jd.getPaymentMethod(), getPlatformCode(), mappingService);
     }
 
     private void inferCategoryIfNeeded(FinStatement stmt, FileTransactionJingdong jd, Long userId,

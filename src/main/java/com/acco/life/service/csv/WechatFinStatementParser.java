@@ -142,11 +142,7 @@ public class WechatFinStatementParser extends AbstractFinStatementParser impleme
     }
 
     private void setAccountRef(FinStatement stmt, FileTransactionWechat wechat) {
-        String accountRef = extractAccountRefFromPaymentMethod(
-                wechat.getPaymentMethod(), 
-                getPlatformCode(), 
-                mappingService);
-        stmt.setAccountRef(accountRef);
+        setAccountRef(stmt, wechat.getPaymentMethod(), getPlatformCode(), mappingService);
     }
 
     private void inferCategoryIfNeeded(FinStatement stmt, FileTransactionWechat wechat, Long userId,

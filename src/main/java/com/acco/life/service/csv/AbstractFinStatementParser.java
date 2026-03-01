@@ -149,5 +149,20 @@ public abstract class AbstractFinStatementParser {
         return cleaned;
     }
 
+    /**
+     * 设置账户引用（accountRef）
+     * 从支付方式中提取账户标识，支持映射服务和本地解析
+     * 
+     * @param stmt 账单实体
+     * @param paymentMethod 支付方式字符串（如：招商银行储蓄卡(6527)、美团月付等）
+     * @param platformCode 平台代码
+     * @param mappingService 映射服务（可选，如果为null则只使用本地解析逻辑）
+     */
+    protected void setAccountRef(FinStatement stmt, String paymentMethod, String platformCode, 
+                                FinStatementMappingService mappingService) {
+        String accountRef = extractAccountRefFromPaymentMethod(paymentMethod, platformCode, mappingService);
+        stmt.setAccountRef(accountRef);
+    }
+
     public abstract String getParserVersion();
 }
